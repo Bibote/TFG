@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "432500434219",
+    "project_id": "tfg-millan-ac682",
+    "storage_bucket": "tfg-millan-ac682.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432500434219:android:5bbf3a9230d6e91586916e",
+        "android_client_info": {
+          "package_name": "com.example.tfg"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqTMApDQxU424hcXmucRwi47T3d92UTV4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
