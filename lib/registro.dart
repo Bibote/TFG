@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
 import 'package:tfg/main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tfg/menu.dart';
 
 
 class Registro extends StatelessWidget {
@@ -26,12 +28,23 @@ class _RegistroWidgetState extends State<RegistroWidget>{
   final emailController = TextEditingController();
   final contra1Controller = TextEditingController();
   final contra2Controller = TextEditingController();
+  String error = "";
   @override
   void dispose() {
     emailController.dispose();
     contra1Controller.dispose();
     contra2Controller.dispose();
     super.dispose();
+  }
+  void cambioError(String texto){
+    setState(() {
+      error = texto;
+    });
+  }
+  void creado(){
+    setState(() {
+      error = "Usuario creado correctamente";
+    });
   }
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
@@ -63,19 +76,20 @@ class _RegistroWidgetState extends State<RegistroWidget>{
           decoration: const InputDecoration(
             labelText: 'Repita la contraseña',
           ),
+          obscureText: true,
         ),
-        /*
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             minimumSize: const Size.fromHeight(40),
           ),
           icon: Icon(Icons.lock_open, size: 32),
           label: Text(
-            'Sign In',
+            'Registrarse',
             style: TextStyle(fontSize: 24),
           ),
-          onPressed: signIn,
-        ),*/
+          onPressed: registro,
+        ),
+        const SizedBox(height: 20),
         RichText(
           text: TextSpan(
             text: '¿Ya tienes una cuenta? ',
@@ -97,8 +111,43 @@ class _RegistroWidgetState extends State<RegistroWidget>{
             ],
           ),
         ),
+        const SizedBox(height: 20),
+        Text(
+          error,
+          style: TextStyle(
+              color: Colors.red,
+              fontSize: 20,
+              fontWeight: FontWeight.bold
+          ),
+        ),
       ],
     ),
   );
+
+  Future registro() async {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator())
+    );
+    if (contra1Controller.text.trim()==contra2Controller.text.trim()) {
+      try {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: contra1Controller.text.trim(),
+        );
+        Navigator.push(context, MaterialPageRoute(builder: (context) => Menu()),);
+      } on FirebaseAuthException catch(e) {
+        if (e.code == 'weak-password') {
+          cambioError("La contraseña es demasiado débil");
+        } else if (e.code == 'email-already-in-use') {
+          cambioError("Ya existe una cuenta con ese email");
+        }
+      }
+    } else {
+      cambioError("Las contraseñas no coinciden");
+    }
+    navigatorKey.currentState!.popUntil((route) => route.isFirst);
+  }
 
 }

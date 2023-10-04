@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tfg/menu.dart';
 import 'package:tfg/registro.dart';
 import 'firebase_options.dart';
@@ -139,6 +140,11 @@ class _LoginWidgetState extends State<LoginWidget> {
           ),
         ),
         const SizedBox(height: 20),
+        ElevatedButton(
+            onPressed: signInWithGoogle,
+            child: Text('GUGUL')
+        ),
+        const SizedBox(height: 20),
         Text(
             error,
           style: TextStyle(
@@ -163,8 +169,6 @@ class _LoginWidgetState extends State<LoginWidget> {
         password: passwordController.text.trim(),
       );
     } on FirebaseAuthException catch (e) {
-      print("espabila");
-      cambioError("espabila");
       print(e);
       if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-email') {
         cambioError("Contraseña o usuario incorrecto.");
@@ -173,10 +177,29 @@ class _LoginWidgetState extends State<LoginWidget> {
       } else {
         cambioError('Ha ocurrido un error con el servidor pruebe en otro momento.');
       }
+    }
+    navigatorKey.currentState!.popUntil((route) => route.isFirst);
+  }
 
-
+  Future signInWithGoogle() async {
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator())
+    );
+    try {
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      cambioError("Ha ocurrido un error con el servidor pruebe en otro momento.");
     }
     navigatorKey.currentState!.popUntil((route) => route.isFirst);
   }
 }
+
 
