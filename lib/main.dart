@@ -82,12 +82,19 @@ class _LoginWidgetState extends State<LoginWidget> {
       error = texto;
     });
   }
+  /*
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
     padding: const EdgeInsets.all(16),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        const SizedBox(height: 100),
+        const Placeholder(
+          fallbackHeight: 200,
+          color: Colors.blue,
+        ),
         const SizedBox(height: 40),
         TextField(
           controller: emailController,
@@ -102,6 +109,7 @@ class _LoginWidgetState extends State<LoginWidget> {
           textInputAction: TextInputAction.done,
           decoration: const InputDecoration(
             labelText: 'Password',
+            border: OutlineInputBorder(),
           ),
           obscureText: true,
         ),
@@ -155,7 +163,145 @@ class _LoginWidgetState extends State<LoginWidget> {
         ),
       ],
     ),
-  );
+  );*/
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const FlutterLogo(
+                size: 200,
+
+              ),
+              const SizedBox(height: 40),
+              TextField(
+                controller: emailController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.blueAccent,
+                      width: 150,
+                    ),
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(50),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              TextField(
+                controller: passwordController,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.blueAccent,
+                      width: 150,
+                    ),
+                    borderRadius: BorderRadius.all(
+                        Radius.circular(50),
+                    ),
+                  ),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                ),
+                icon: Icon(Icons.lock_open, size: 32),
+                label: Text(
+                  'Iniciar sesión',
+                  style: TextStyle(fontSize: 24),
+                ),
+                onPressed: signIn,
+              ),
+              const SizedBox(height: 20),
+              RichText(
+                text: TextSpan(
+                  text: '¿No tienes una cuenta? ',
+                  style: TextStyle(color: Colors.black),
+                  children: [
+                    TextSpan(
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => Registro()),
+                          );
+                        },
+                      text: 'Registrarse',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                child: Container(
+                    width: 250,
+                    height: 50,
+                    margin: EdgeInsets.only(top: 25),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color:Colors.black
+                    ),
+                    child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
+                          children: <Widget>[
+                            Container(
+                              height: 30.0,
+                              width: 30.0,
+                              decoration: const BoxDecoration(
+                                image: DecorationImage(
+                                    image:
+                                    AssetImage('assets/google.png'),
+                                    fit: BoxFit.cover),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const Text('Iniciar sesión con Google',
+                              style: TextStyle(
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white
+                              ),
+                            ),
+                          ],
+                        )
+                    )
+                ),
+                onTap: (){
+                  signInWithGoogle();
+                },
+              ),
+              const SizedBox(height: 20),
+              Text(
+                error,
+                style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold
+                ),
+              ),
+
+            ],
+          ),
+      )
+    );
+  }
 
   Future signIn() async {
     showDialog(
