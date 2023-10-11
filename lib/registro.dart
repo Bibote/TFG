@@ -11,7 +11,7 @@ class Registro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: RegistroWidget(),
     );
   }
@@ -47,107 +47,136 @@ class _RegistroWidgetState extends State<RegistroWidget>{
     });
   }
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const SizedBox(height: 40),
-        TextField(
-          controller: emailController,
-          textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(
-            labelText: 'Email',
-          ),
-        ),
-        const SizedBox(height: 30),
-        TextField(
-          controller: contra1Controller,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            labelText: 'Contraseña',
-          ),
-          obscureText: true,
-        ),
-        const SizedBox(height: 20),
-        TextField(
-          controller: contra2Controller,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            labelText: 'Repita la contraseña',
-          ),
-          obscureText: true,
-        ),
-        ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(40),
-          ),
-          icon: Icon(Icons.lock_open, size: 32),
-          label: Text(
-            'Registrarse',
-            style: TextStyle(fontSize: 24),
-          ),
-          onPressed: registro,
-        ),
-        const SizedBox(height: 20),
-        RichText(
-          text: TextSpan(
-            text: '¿Ya tienes una cuenta? ',
-            style: TextStyle(color: Colors.black),
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              TextSpan(
-                recognizer: TapGestureRecognizer()..onTap = () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Login()),
-                  );
-                },
-                text: 'Iniciar sesión',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
+              const FlutterLogo(
+                size: 200,
+              ),
+              const SizedBox(height: 40),
+              TextField(
+                controller: emailController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              TextField(
+                controller: contra1Controller,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(10),
+                    ),
+                  ),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: contra2Controller,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Repita la contraseña',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(10),
+                    ),
+                  ),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.lock_open, size: 32),
+                label: const Text(
+                  'Registrarse',
+                  style: TextStyle(fontSize: 24),
+                ),
+                onPressed: registro,
+              ),
+              const SizedBox(height: 20),
+              RichText(
+                text: TextSpan(
+                  text: '¿Ya tienes una cuenta? ',
+                  style: const TextStyle(color: Colors.black),
+                  children: [
+                    TextSpan(
+                      recognizer: TapGestureRecognizer()..onTap = () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => Login()),
+                        );
+                      },
+                      text: 'Iniciar sesión',
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                error,
+                style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        Text(
-          error,
-          style: TextStyle(
-              color: Colors.red,
-              fontSize: 20,
-              fontWeight: FontWeight.bold
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Future registro() async {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator())
+      )
     );
-    if (contra1Controller.text.trim()==contra2Controller.text.trim()) {
-      try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: contra1Controller.text.trim(),
-        );
-        Navigator.push(context, MaterialPageRoute(builder: (context) => Menu()),);
-      } on FirebaseAuthException catch(e) {
-        if (e.code == 'weak-password') {
-          cambioError("La contraseña es demasiado débil");
-        } else if (e.code == 'email-already-in-use') {
-          cambioError("Ya existe una cuenta con ese email");
+  }
+    Future registro() async {
+      showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(child: CircularProgressIndicator())
+      );
+      if (contra1Controller.text.trim()==contra2Controller.text.trim()) {
+        try {
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: contra1Controller.text.trim(),
+          );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => Menu()),);
+        } on FirebaseAuthException catch(e) {
+          if (e.code == 'weak-password') {
+            cambioError("La contraseña es demasiado débil");
+          } else if (e.code == 'email-already-in-use') {
+            cambioError("Ya existe una cuenta con ese email");
+          }
         }
+      } else {
+        cambioError("Las contraseñas no coinciden");
       }
-    } else {
-      cambioError("Las contraseñas no coinciden");
+      navigatorKey.currentState!.popUntil((route) => route.isFirst);
     }
-    navigatorKey.currentState!.popUntil((route) => route.isFirst);
   }
 
-}
+
