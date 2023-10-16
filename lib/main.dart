@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:tfg/menu.dart';
-import 'package:tfg/registro.dart';
+import 'package:tfg/inicio/menu.dart';
+import 'package:tfg/inicio/registro.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
@@ -40,7 +40,9 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner:false,
       navigatorKey: navigatorKey,
       title: 'Flutter Demo',
-      theme: ThemeData(),
+      theme: ThemeData(
+        primarySwatch: Colors.indigo,
+      ),
       darkTheme: ThemeData.dark(),
       themeMode: _themeMode,
       home: Login(),
@@ -51,6 +53,10 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _themeMode = themeMode;
     });
+  }
+
+  ThemeMode getTheme() {
+    return _themeMode;
   }
 }
 
@@ -154,7 +160,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                 RichText(
                   text: TextSpan(
                     text: '¿No tienes una cuenta? ',
-                    style: TextStyle(color: Colors.black),
                     children: [
                       TextSpan(
                         recognizer: TapGestureRecognizer()
