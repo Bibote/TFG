@@ -16,18 +16,30 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: SfCalendar(
-          view: CalendarView.month,
-          // by default the month appointment display mode set as Indicator, we can
-          // change the display mode as appointment using the appointment display
-          // mode property
-          monthViewSettings: const MonthViewSettings(
-              appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SfCalendar(
+            view: CalendarView.month,
+              // by default the month appointment display mode set as Indicator, we can
+              // change the display mode as appointment using the appointment display
+              // mode property
+              monthViewSettings: const MonthViewSettings(
+                  appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
+              ),
+        ),
+
+        floatingActionButton: FloatingActionButton(
+          onPressed: (){},
+          child: const Icon(Icons.add),
         )
 
     );
+
   }
+
 }
+

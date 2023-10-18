@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tfg/Educacion/Calendario/Calendario_edu.dart';
+import 'package:tfg/Educacion/horario/horario_edu.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
 import 'package:tfg/main.dart';
 
@@ -48,11 +49,23 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
+                cambioPagina(pantallaHorario());
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.calendar_month, size: 32),
+              label: Text("Horario de clases")
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(250, 50),
+              ),
+              onPressed: () {
                 cambioPagina(MyHomePage());
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.calendar_month, size: 32),
-              label: Text("Calendario")
+              label: Text("Entregas")
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(

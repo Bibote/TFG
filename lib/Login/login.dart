@@ -1,96 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tfg/inicio/menu.dart';
 import 'package:tfg/inicio/registro.dart';
-import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:syncfusion_localizations/syncfusion_localizations.dart';
-
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
-
-
-}
-
-final navigatorKey = GlobalKey<NavigatorState>();
-
-class MyApp extends StatefulWidget {
-
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  static _MyAppState of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>()!;
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system;
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        SfGlobalLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: [
-        Locale('es'),
-        //Locale('en'),
-      ],
-      locale: const Locale('es'),
-      debugShowCheckedModeBanner:false,
-      navigatorKey: navigatorKey,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-      ),
-      darkTheme: ThemeData.dark(),
-      themeMode: _themeMode,
-      home: Login(),
-    );
-  }
-
-  void changeTheme(ThemeMode themeMode) {
-    setState(() {
-      _themeMode = themeMode;
-    });
-  }
-
-  ThemeMode getTheme() {
-    return _themeMode;
-  }
-}
+import 'package:tfg/main.dart';
 
 class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context,snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if(snapshot.hasError) {
-            return const Center(child: Text('Ha ocurrido un error'));
-          } else if (snapshot.hasData) {
-            return Menu();
-          } else {
-            return LoginWidget();
-          }
-        }
-      )
+        body: StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context,snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if(snapshot.hasError) {
+                return const Center(child: Text('Ha ocurrido un error'));
+              } else if (snapshot.hasData) {
+                return Menu();
+              } else {
+                return LoginWidget();
+              }
+            }
+        )
     );
   }
 }
@@ -117,7 +50,7 @@ class _LoginWidgetState extends State<LoginWidget> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+        child: Padding(
           padding: const EdgeInsets.all(32),
           child: SingleChildScrollView(
             child: Column(
@@ -148,7 +81,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                     labelText: 'Password',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.all(
-                          Radius.circular(10),
+                        Radius.circular(10),
                       ),
                     ),
                   ),
@@ -243,7 +176,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               ],
             ),
           ),
-      )
+        )
     );
   }
 
@@ -291,5 +224,3 @@ class _LoginWidgetState extends State<LoginWidget> {
     navigatorKey.currentState!.popUntil((route) => route.isFirst);
   }
 }
-
-
