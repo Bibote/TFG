@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tfg/inicio/menu.dart';
-import 'package:tfg/inicio/registro.dart';
+import 'package:tfg/Login/registro.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:tfg/main.dart';

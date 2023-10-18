@@ -13,6 +13,7 @@ class Menu extends StatefulWidget {
 }
 
 class _MenuState extends State<Menu> {
+  final GlobalKey<ScaffoldState> _key = GlobalKey();
   final List<bool> _selectedModo = <bool>[true, false];
   final List<bool> _selectedLuz = <bool>[false, false, true];
   Widget _pantalla= Dashboard();
@@ -147,6 +148,7 @@ class _MenuState extends State<Menu> {
       ),
     ];
     return Scaffold(
+      key: _key,
       appBar: AppBar(
         title: const Text('Menu'),
         actions: [
