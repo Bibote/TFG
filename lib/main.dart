@@ -1,12 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:tfg/Inicio/menu.dart';
 import 'package:tfg/Login/login.dart';
 import 'firebase_options.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:syncfusion_localizations/syncfusion_localizations.dart';
+import 'package:syncfusion_flutter_core/core.dart';
+import 'licencias.dart';
 
 
 void main() async {
+  //SyncfusionLicense.registerLicense(licencia_syncfusion);
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -55,11 +60,9 @@ class _MyAppState extends State<MyApp> {
       ),
       darkTheme: ThemeData.dark(),
       themeMode: _themeMode,
-      home: Login(),
+      home: App(),
     );
   }
-
-
   void changeTheme(ThemeMode themeMode) {
     setState(() {
       _themeMode = themeMode;
@@ -68,6 +71,28 @@ class _MyAppState extends State<MyApp> {
 
   ThemeMode getTheme() {
     return _themeMode;
+  }
+}
+class App extends StatelessWidget {
+  const App({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context,snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if(snapshot.hasError) {
+                return const Center(child: Text('Ha ocurrido un error'));
+              } else if (snapshot.hasData) {
+                return const Menu();
+              } else {
+                return LoginWidget();
+              }
+            }
+        )
+    );
   }
 }
 

@@ -120,13 +120,12 @@ class _RegistroWidgetState extends State<RegistroWidget>{
               RichText(
                 text: TextSpan(
                   text: '¿Ya tienes una cuenta? ',
-                  style: const TextStyle(color: Colors.black),
                   children: [
                     TextSpan(
                       recognizer: TapGestureRecognizer()..onTap = () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => Login()),
+                          MaterialPageRoute(builder: (context) => App()),
                         );
                       },
                       text: 'Iniciar sesión',

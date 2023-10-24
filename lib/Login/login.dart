@@ -6,28 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:tfg/main.dart';
 
-class Login extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        body: StreamBuilder<User?>(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context,snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if(snapshot.hasError) {
-                return const Center(child: Text('Ha ocurrido un error'));
-              } else if (snapshot.hasData) {
-                return Menu();
-              } else {
-                return LoginWidget();
-              }
-            }
-        )
-    );
-  }
-}
+
 class LoginWidget extends StatefulWidget {
+  const LoginWidget({super.key});
+
   @override
   _LoginWidgetState createState() => _LoginWidgetState();
 }
