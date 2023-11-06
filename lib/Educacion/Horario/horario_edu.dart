@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:tfg/Educacion/Horario/horario_edu_bd.dart';
+import 'package:tfg/Educacion/Horario/horario_edu_bl.dart';
 
 
 class pantallaHorario extends StatefulWidget {
@@ -15,14 +16,34 @@ class pantallaHorario extends StatefulWidget {
 }
 
 class _pantallaHorarioState extends State<pantallaHorario> {
+  final CalendarController calendarController = CalendarController();
+  _SesionDataSource? _dataSource;
+  @override
+  initState() {
+    getSesiones();
+    super.initState();
+  }
+  Future<void> getSesiones()async{
+    final horarioBL _bl = horarioBL();
+    List<Appointment> sesiones = await _bl.getSesiones();
+    print("sesiones");
+    print(sesiones);
+    setState(() {
+      _dataSource = _SesionDataSource(sesiones);
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SfCalendar(
+          dataSource: _dataSource,
           showCurrentTimeIndicator: false,
           view: CalendarView.workWeek,
+          onTap: _onCalendarTapped,
         ),
       ),
       floatingActionButton: SpeedDial(
@@ -151,10 +172,11 @@ class Asignaturas extends StatefulWidget {
   @override
   _AsignaturasState createState() => _AsignaturasState();
 }
+
 class _AsignaturasState extends State<Asignaturas> {
   final db = FirebaseFirestore.instance;
   List<Widget> _asignaturas = [];
-  final FirestoreBD _db = FirestoreBD();
+  final firestoreHorarioBD _db = firestoreHorarioBD();
   String error = "";
   Future<List<Widget>> getAsignaturas() async {
     List<Widget> asignaturas = [];
@@ -275,7 +297,7 @@ class _AsignaturasState extends State<Asignaturas> {
                     color = value;
                   }, preColor: color),
                   SizedBox(height: 10),
-                  Text(
+                  const Text(
                     'Ubicación clase magistral:*',
                     style: TextStyle(
                         color: Colors.black,
@@ -289,7 +311,7 @@ class _AsignaturasState extends State<Asignaturas> {
                     decoration: InputDecoration(hintText: 'Ubicación clase magistral*'),
                   ),
                   SizedBox(height: 10),
-                  Text(
+                  const Text(
                     'Ubicación laboratorio:',
                     style: TextStyle(
                         color: Colors.black,
@@ -330,7 +352,7 @@ class _AsignaturasState extends State<Asignaturas> {
                     });
                   } else {
                     if (preId != null) {
-                      FirestoreBD().actualizarAsignatura(preId, {
+                      firestoreHorarioBD().actualizarAsignatura(preId, {
                         'nombre': nombre,
                         'color': color,
                         // Asegúrate de tener una variable color que guarde el color seleccionado en DropdownColor
@@ -347,7 +369,7 @@ class _AsignaturasState extends State<Asignaturas> {
                     }
                     else {
                       // Aquí es donde agregamos la asignatura a Firestore
-                      FirestoreBD().crearAsignatura({
+                      firestoreHorarioBD().crearAsignatura({
                         'nombre': nombre,
                         'color': color,
                         // Asegúrate de tener una variable color que guarde el color seleccionado en DropdownColor
@@ -427,47 +449,59 @@ class _AsignaturaState extends State<Asignatura> {
           children: [
                 SizedBox(
                   width: 200,
-                  child: Center(
-                    child: ListView(
-                      shrinkWrap: true,
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            widget.nombre,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold
-                            ),
+                  child: ListView(
+                    shrinkWrap: true,
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          widget.nombre,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold
                           ),
                         ),
-                        const SizedBox(width: 10),
-
-                        Icon(Icons.school, color: Colors.white), // Icono para la clase
-                        SizedBox(width: 5), // Espacio entre el icono y el texto (ubicación de la clase
-                        Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            widget.ubicacion_clase,
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        if (widget.ubicacion_laboratorio.isNotEmpty)...[
-                              Icon(Icons.science, color: Colors.white), // Icono para la clase
-                              SizedBox(width: 5),
+                      ),
+                      SizedBox(width: 20),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.school, color: Colors.white, size: 20,
+                              ), // Icono para la clase
+                              SizedBox(width: 5), // Espacio entre el icono y el texto (ubicación de la clase
                               Container(
                                 alignment: Alignment.center,
                                 child: Text(
-                                  widget.ubicacion_laboratorio,
+                                  widget.ubicacion_clase,
                                   style: TextStyle(color: Colors.white, fontSize: 16),
                                 ),
                               ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const SizedBox(width: 10),
+                              if (widget.ubicacion_laboratorio.isNotEmpty)...[
+                                Icon(Icons.science, color: Colors.white, size: 20,), // Icono para la clase
+                                SizedBox(width: 5),
+                                Container(
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    widget.ubicacion_laboratorio,
+                                    style: TextStyle(color: Colors.white, fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
                   )
                 ),
 
@@ -509,7 +543,7 @@ class _AsignaturaState extends State<Asignatura> {
                       return;
                     }
 
-                    if(await FirestoreBD().eliminarAsignatura(widget.id)){
+                    if(await firestoreHorarioBD().eliminarAsignatura(widget.id)){
                       widget.parentDeleteFunc(widget.id);
                     } else {
                       print("Error al eliminar la asignatura");
@@ -527,6 +561,18 @@ class _AsignaturaState extends State<Asignatura> {
         ),
     );
   }
-
 }
+
+/// An object to set the appointment collection data source to collection, and
+/// allows to add, remove or reset the appointment collection.
+class _SesionDataSource extends CalendarDataSource {
+  _SesionDataSource(this.source);
+
+  List<Appointment> source;
+
+  @override
+  List<dynamic> get appointments => source;
+}
+
+
 

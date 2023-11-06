@@ -2,8 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 
-class FirestoreBD {
+class firestoreHorarioBD {
   final FirebaseFirestore db = FirebaseFirestore.instance;
+
+  static final firestoreHorarioBD _singleton = new firestoreHorarioBD._internal();
+  factory firestoreHorarioBD() {
+    return _singleton;
+  }
+  firestoreHorarioBD._internal();
 
   Future<List<Map<String, dynamic>>> getAsignaturas() async {
     List<Map<String, dynamic>> asignaturas = [];
@@ -64,6 +70,25 @@ class FirestoreBD {
       print("Error al actualizar la asignatura: $e");
       return false;
     }
+  }
+  Future<List> getSesiones() async {
+    var snapShotsValue = await db
+        .collection("clase").where("usuario", isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+        .get();
+    List<Map> sesiones = [];
+    for (var element in snapShotsValue.docs) {
+      var asignaturaRef = db.doc(element.data()['asignatura'].path);
+      var snapShotAsignatura = await asignaturaRef.get();
+      Map sesion = {
+        'id': element.id,
+        'data': element.data(),
+        'asignatura': snapShotAsignatura.data(),
+      };
+      sesiones.add(sesion);
+    }
+    print("sesionesBD:");
+    print(sesiones);
+    return sesiones;
   }
 }
 
