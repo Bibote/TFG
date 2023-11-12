@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/gestures.dart';
@@ -164,6 +165,10 @@ class _RegistroWidgetState extends State<RegistroWidget>{
             email: emailController.text.trim(),
             password: contra1Controller.text.trim(),
           );
+          FirebaseFirestore db = FirebaseFirestore.instance;
+          await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).set({
+            'email': emailController.text.trim(),
+          });
           Navigator.push(context, MaterialPageRoute(builder: (context) => Menu()),);
         } on FirebaseAuthException catch(e) {
           if (e.code == 'weak-password') {

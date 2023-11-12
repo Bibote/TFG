@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tfg/inicio/menu.dart';
@@ -193,6 +194,10 @@ class _LoginWidgetState extends State<LoginWidget> {
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
+    FirebaseFirestore db = FirebaseFirestore.instance;
+
+
+
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -200,6 +205,15 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
     try {
       await FirebaseAuth.instance.signInWithCredential(credential);
+      var usersRef = db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid);
+      await usersRef.get()
+          .then((docSnapshot) => {
+        if (!docSnapshot.exists) {
+          usersRef.set({
+            'email': FirebaseAuth.instance.currentUser?.email,
+          })
+        }
+      });
     } on FirebaseAuthException catch (e) {
       cambioError("Ha ocurrido un error con el servidor pruebe en otro momento.");
     }

@@ -29,26 +29,72 @@ class horarioBL {
       'Lima': Colors.lime,
       'Índigo': Colors.indigo,
     };
-    List sesionesBD = await _db.getSesiones();
+    List asignaturasBD = await _db.getSesiones();
     List<Appointment> sesionesCalendario = [];
-    sesionesBD.forEach((sesion) {
-      String lugar= "";
-      if (sesion['data']['esMag']==true){
-        lugar= sesion['asignatura']['ubi_mag'];
-      } else {
-        lugar= sesion['asignatura']['ubi_lab'];
+    asignaturasBD.forEach((asignatura) {
+      String ubiMag= asignatura['asignatura_data']['ubi_mag'];
+      String ubiLab= "";
+      if(asignatura['asignatura_data']['ubi_mag'] != null){
+        ubiMag = asignatura['asignatura_data']['ubi_lab'];
       }
-      sesionesCalendario.add(
-          Appointment(
-            startTime: (sesion['data']['hora_ini'] as Timestamp).toDate(),
-            endTime: (sesion['data']['hora_fin'] as Timestamp).toDate(),
-            isAllDay: false,
-            subject: sesion['asignatura']['nombre'],
-            color: colorMap[sesion['asignatura']['color']]!,
-            location: lugar,
-          )
-      );
+      RecurrenceProperties recursion = RecurrenceProperties(
+                                        startDate:  DateTime.now(),
+                                        endDate: (asignatura['asignatura_data']['fecha_fin'] as Timestamp).toDate(),
+                                        recurrenceType: RecurrenceType.daily,
+                                        interval : 7,
+                                        recurrenceRange: RecurrenceRange.endDate,
+                                        //recurrenceCount: 20,
+                                      );
+      asignatura['sesiones'].forEach((sesion) {
+        DateTime horaIni = (sesion['sesion_data']['hora_ini'] as Timestamp).toDate();
+        DateTime horaFin = (sesion['sesion_data']['hora_fin'] as Timestamp).toDate();
+        String lugar="";
+        if (asignatura['asignatura_data']['es_lab']==true){
+          lugar= ubiLab;
+        } else {
+          lugar= ubiMag;
+        }
+        sesionesCalendario.add(
+            Appointment(
+              id: sesion['id'],
+              startTime: horaIni,
+              endTime: horaFin,
+              isAllDay: false,
+              subject: asignatura['asignatura_data']['nombre'],
+              color: colorMap[asignatura['asignatura_data']['color']]!,
+              location: lugar,
+              recurrenceRule: SfCalendar.generateRRule(
+                  recursion,
+                  horaIni,
+                  horaFin
+              ),
+              //recurrenceExceptionDates: sesion['asignatura']['excepciones'],
+            )
+        );
+      });
     });
     return sesionesCalendario;
+
+
+
+  }
+
+  Future<bool>actualizarAsignatura(String preId, Map<String, Object> map) async {
+    if(await _db.actualizarAsignatura(preId, map)){
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  Future<String>crearAsignatura(Map<String, Object?> map) async {
+    print("map: ");
+    print(map);
+    String id = await _db.crearAsignatura(map);
+    if(id != ""){
+      return id;
+    } else {
+      return "";
+    }
   }
 }

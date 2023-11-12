@@ -13,7 +13,7 @@ class firestoreHorarioBD {
 
   Future<List<Map<String, dynamic>>> getAsignaturas() async {
     List<Map<String, dynamic>> asignaturas = [];
-    await db.collection('asignatura').where("usuario", isEqualTo: FirebaseAuth.instance.currentUser?.uid).get().then((event) {
+    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").get().then((event) {
       event.docs.forEach((element) {
         var asignatura = element.data();
         print("Asignaturabd: ");
@@ -23,7 +23,8 @@ class firestoreHorarioBD {
           'nombre': asignatura['nombre'],
           'color': asignatura['color'],
           'ubicacion_clase': asignatura['ubi_mag'],
-          'ubicacion_laboratorio': asignatura['ubi_lab']
+          'ubicacion_laboratorio': asignatura['ubi_lab'],
+          'fecha_fin': asignatura['fecha_fin'],
         });
       });
     });
@@ -33,7 +34,7 @@ class firestoreHorarioBD {
 
   Future<bool> eliminarAsignatura(String id) async {
     try {
-      await db.collection('asignatura').doc(id).delete();
+      await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").doc(id).delete();
       return true;
     } catch (e) {
       print("Error al eliminar la asignatura: $e");
@@ -42,12 +43,14 @@ class firestoreHorarioBD {
   }
 
   Future<String> crearAsignatura(Map<String, dynamic> asignatura) async {
-    await db.collection('asignatura').add({
+    print("fecha fin: ${asignatura['fecha_fin']}");
+    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").add({
       'nombre': asignatura['nombre'],
       'color': asignatura['color'],
       'ubi_mag': asignatura['ubicacion_clase'],
       'ubi_lab': asignatura['ubicacion_laboratorio'],
-      'usuario': FirebaseAuth.instance.currentUser?.uid // Asegúrate de importar FirebaseAuth
+      'usuario': FirebaseAuth.instance.currentUser?.uid,
+      'fecha_fin': Timestamp.fromDate(asignatura['fecha_fin']),
     }).then((value) {
       print("Asignatura creada con id: ${value.id}");
       return value.id;
@@ -58,12 +61,14 @@ class firestoreHorarioBD {
   }
 
   Future<bool> actualizarAsignatura(String id, Map<String, dynamic> asignatura) async {
+
     try {
-      await db.collection('asignatura').doc(id).update({
+      await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").doc(id).update({
         'nombre': asignatura['nombre'],
         'color': asignatura['color'],
         'ubi_mag': asignatura['ubicacion_clase'],
         'ubi_lab': asignatura['ubicacion_laboratorio'],
+        'fecha_fin': Timestamp.fromDate(asignatura['fecha_fin']),
       });
       return true;
     } catch (e) {
@@ -72,23 +77,31 @@ class firestoreHorarioBD {
     }
   }
   Future<List> getSesiones() async {
-    var snapShotsValue = await db
-        .collection("clase").where("usuario", isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-        .get();
-    List<Map> sesiones = [];
-    for (var element in snapShotsValue.docs) {
-      var asignaturaRef = db.doc(element.data()['asignatura'].path);
-      var snapShotAsignatura = await asignaturaRef.get();
-      Map sesion = {
-        'id': element.id,
-        'data': element.data(),
-        'asignatura': snapShotAsignatura.data(),
-      };
-      sesiones.add(sesion);
+    List<Map> asignaturas = [];
+    try {
+      var event = await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").get();
+      for (var element in event.docs) {
+        Map asignatura = {
+          'asignatura_id' : element.id,
+          'asignatura_data' : element.data(),
+        };
+        var value = await db.collection("usuarios/${FirebaseAuth.instance.currentUser?.uid}/asignaturas/${element.id}/sesiones").get();
+        List<Map> sesiones = [];
+        for (var sesion in value.docs) {
+          Map sesionData = {
+            'sesion_id' : sesion.id,
+            'sesion_data' : sesion.data(),
+          };
+          sesiones.add(sesionData);
+        }
+        asignatura['sesiones'] = sesiones;
+        asignaturas.add(asignatura);
+      }
+    } catch (e) {
+      print("Error al obtener las asignaturas: $e");
     }
-    print("sesionesBD:");
-    print(sesiones);
-    return sesiones;
+    return asignaturas;
   }
+
 }
 

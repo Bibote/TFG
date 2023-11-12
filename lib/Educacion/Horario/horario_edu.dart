@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:tfg/Educacion/Horario/horario_edu_bd.dart';
 import 'package:tfg/Educacion/Horario/horario_edu_bl.dart';
 
@@ -26,8 +28,6 @@ class _pantallaHorarioState extends State<pantallaHorario> {
   Future<void> getSesiones()async{
     final horarioBL _bl = horarioBL();
     List<Appointment> sesiones = await _bl.getSesiones();
-    print("sesiones");
-    print(sesiones);
     setState(() {
       _dataSource = _SesionDataSource(sesiones);
     });
@@ -43,7 +43,17 @@ class _pantallaHorarioState extends State<pantallaHorario> {
           dataSource: _dataSource,
           showCurrentTimeIndicator: false,
           view: CalendarView.workWeek,
-          onTap: _onCalendarTapped,
+          onTap: calendarTap,
+          timeSlotViewSettings: const TimeSlotViewSettings(
+            startHour: 8,
+            timeIntervalHeight: 30,
+            timeIntervalWidth: 50,
+            timeInterval: Duration(minutes: 30),
+            timeFormat: 'HH:mm',
+            timeTextStyle: TextStyle(
+              fontSize: 12,
+            ),
+          ),
         ),
       ),
       floatingActionButton: SpeedDial(
@@ -65,12 +75,49 @@ class _pantallaHorarioState extends State<pantallaHorario> {
     );
   }
 
+
+  void calendarTap(CalendarTapDetails details) {
+    if (details.targetElement == CalendarElement.appointment) {
+      // Aquí es donde manejas el tap en un evento
+      final Appointment appointment = details.appointments?[0];
+      // Puedes mostrar un diálogo de confirmación antes de eliminar el evento
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('¿Quieres eliminar esta sesión, o todas las repeticiones?'),
+            actions: <Widget>[
+              ElevatedButton(
+                child: Text('Cancelar'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              ElevatedButton(
+                child: Text('Eliminar'),
+                onPressed: () {
+                  setState(() {
+                    // Aquí es donde eliminarías el evento de tu lista de eventos
+                    // events.remove(appointment);
+                  });
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else if (details.targetElement == CalendarElement.calendarCell) {
+      print("crear evento");
+    }
+  }
+
   void verAsignaturas() {
     showDialog(
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: Text('Tus asignaturas'),
+          title: Center(child: Text('Tus asignaturas')),
           content: Container(
             height: MediaQuery.of(context).size.height*0.5,
             width: MediaQuery.of(context).size.width,
@@ -117,18 +164,16 @@ class _DropdownColorState extends State<DropdownColor> {
 
   @override
   void initState() {
-    super.initState();
     if (widget.preColor != "") {
       widget.onColorSelected(widget.preColor);
       dropdownValue = widget.preColor;
     } else {
       widget.onColorSelected("Rojo");
-
     }
+    //super.initState();
   }
   @override
   Widget build(BuildContext context) {
-    if(widget.preColor.isNotEmpty) dropdownValue = widget.preColor;
     return DropdownButton<String>(
       value: dropdownValue,
       icon: Icon(Icons.arrow_downward),
@@ -188,10 +233,11 @@ class _AsignaturasState extends State<Asignaturas> {
           ubicacion_clase: asignatura['ubicacion_clase'],
           ubicacion_laboratorio: asignatura['ubicacion_laboratorio'],
           id: asignatura['id'],
-        parentDeleteFunc: menosAsignatura, 
-        parentEditFunc: nuevaAsignatura,
+          fecha_fin: asignatura['fecha_fin'].toDate(),
+          parentDeleteFunc: menosAsignatura,
+          parentEditFunc: nuevaAsignatura,
       ));
-      asignaturas.add(SizedBox(height: 10)); // Espacio vertical entre las asignaturas
+      asignaturas.add(const SizedBox(height: 10)); // Espacio vertical entre las asignaturas
     }
     return asignaturas;
   }
@@ -248,20 +294,22 @@ class _AsignaturasState extends State<Asignaturas> {
       _asignaturas.removeWhere((element) => element is Asignatura && element.id == id);
     });
   }
-
-  void nuevaAsignatura([String? preNombre, String? preColor, String? preUbiClase, String? preUbiLab, String? preId]) {
+  late final ValueNotifier<DateTime> selectedDate = ValueNotifier<DateTime>(DateTime.now().add(Duration(days: 7)));
+  void nuevaAsignatura([String? preNombre, String? preColor, String? preUbiClase, String? preUbiLab, String? preId, DateTime? preFechaFin]) {
     showDialog(
       context: context,
       builder: (_) {
         var nombreController = TextEditingController();
         var ubicacionClaseController = TextEditingController();
         var ubicacionLabController = TextEditingController();
+
         String color = '';
         String error = "";
         if (preNombre != null) nombreController.text = preNombre;
         if (preUbiClase != null) ubicacionClaseController.text = preUbiClase;
         if (preUbiLab != null) ubicacionLabController.text = preUbiLab;
         if (preColor != null) color = preColor;
+        if (preFechaFin != null) selectedDate.value = preFechaFin;
         return StatefulBuilder(
           builder: (context, setState) =>
            AlertDialog(
@@ -285,7 +333,7 @@ class _AsignaturasState extends State<Asignaturas> {
                     decoration: InputDecoration(hintText: 'Nombre*'),
                   ),
                   SizedBox(height: 10),
-                  Text(
+                  const Text(
                     'Color:*',
                     style: TextStyle(
                         color: Colors.black,
@@ -325,6 +373,32 @@ class _AsignaturasState extends State<Asignaturas> {
                     decoration: InputDecoration(hintText: 'Ubicación laboratorio'),
                   ),
                   SizedBox(height: 10),
+                  const Text(
+                    'Fecha Fin:',
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold
+                    ),
+                  ),
+                  ValueListenableBuilder<DateTime>(
+                    valueListenable: selectedDate,
+                    builder: (context, date, child) {
+                      return TextButton(
+                        onPressed: () {
+                        showDatePickerDialog(context,preFechaFin);
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Text(DateFormat('yyyy-MM-dd').format(date)),
+                            const Icon(Icons.calendar_today),
+                            ],
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 10),
                   Text(
                     error,
                     style: const TextStyle(
@@ -352,16 +426,17 @@ class _AsignaturasState extends State<Asignaturas> {
                     });
                   } else {
                     if (preId != null) {
-                      firestoreHorarioBD().actualizarAsignatura(preId, {
+                      horarioBL().actualizarAsignatura(preId, {
                         'nombre': nombre,
                         'color': color,
                         // Asegúrate de tener una variable color que guarde el color seleccionado en DropdownColor
                         'ubicacion_clase': ubicacionClase,
                         'ubicacion_laboratorio': ubicacionLab,
+                        'fecha_fin': selectedDate.value,
                       }).then((value) {
                         menosAsignatura(preId);
                         addAsignaturaLista(
-                            nombre, color, ubicacionClase, ubicacionLab, preId);
+                            nombre, color, ubicacionClase, ubicacionLab, preId,selectedDate.value);
                       }).catchError((error) {
                         print("Error al actualizar asignatura: $error");
                       });
@@ -369,17 +444,16 @@ class _AsignaturasState extends State<Asignaturas> {
                     }
                     else {
                       // Aquí es donde agregamos la asignatura a Firestore
-                      firestoreHorarioBD().crearAsignatura({
+                      horarioBL().crearAsignatura({
                         'nombre': nombre,
                         'color': color,
-                        // Asegúrate de tener una variable color que guarde el color seleccionado en DropdownColor
                         'ubicacion_clase': ubicacionClase,
                         'ubicacion_laboratorio': ubicacionLab,
-                        'usuario': FirebaseAuth.instance.currentUser?.uid
-                        // Asegúrate de importar FirebaseAuth
+                        'usuario': FirebaseAuth.instance.currentUser?.uid,
+                        'fecha_fin': selectedDate.value,
                       }).then((id) {
                         addAsignaturaLista(
-                            nombre, color, ubicacionClase, ubicacionLab, id);
+                            nombre, color, ubicacionClase, ubicacionLab, id,selectedDate.value);
                       }).catchError((error) {
                         print("Error al agregar asignatura: $error");
                       });
@@ -395,9 +469,42 @@ class _AsignaturasState extends State<Asignaturas> {
       },
     );
   }
-  void addAsignaturaLista(String nombre, String color, String ubicacionClase, String ubicacionLab, String id){
+  void showDatePickerDialog(BuildContext context, DateTime? preFechaFin) {
+    DateTime fecha =selectedDate.value;
+    if (preFechaFin != null) fecha = preFechaFin;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: SfDateRangePicker(
+              initialSelectedDate: fecha,
+              view: DateRangePickerView.month,
+              monthViewSettings: const DateRangePickerMonthViewSettings(firstDayOfWeek: 1),
+              onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+                selectedDate.value = args.value;
+                print(selectedDate.value);
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              child: Text('Cerrar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void addAsignaturaLista(String nombre, String color, String ubicacionClase, String ubicacionLab, String id, DateTime fecha_fin){
     setState(() {
-      _asignaturas.add(Asignatura(nombre: nombre, color: color, ubicacion_clase: ubicacionClase, ubicacion_laboratorio: ubicacionLab, id: id, parentDeleteFunc: menosAsignatura, parentEditFunc: nuevaAsignatura,));
+      _asignaturas.add(Asignatura(nombre: nombre, color: color, ubicacion_clase: ubicacionClase, ubicacion_laboratorio: ubicacionLab, id: id,fecha_fin:fecha_fin, parentDeleteFunc: menosAsignatura, parentEditFunc: nuevaAsignatura,));
     });
   }
 }
@@ -406,12 +513,13 @@ class _AsignaturasState extends State<Asignaturas> {
 
 
 class Asignatura extends StatefulWidget {
-  const Asignatura({Key? key, required this.nombre, required this.color, required this.ubicacion_clase, required this.ubicacion_laboratorio, required this.id, required this.parentDeleteFunc, required this.parentEditFunc}) : super(key: key);
+  const Asignatura({Key? key, required this.nombre, required this.color, required this.ubicacion_clase, required this.ubicacion_laboratorio, required this.id, required this.parentDeleteFunc, required this.parentEditFunc, required this.fecha_fin}) : super(key: key);
   final String nombre;
   final String color;
   final String ubicacion_clase;
   final String ubicacion_laboratorio;
   final String id;
+  final DateTime fecha_fin;
   final Function parentDeleteFunc;
   final Function parentEditFunc;
   @override
@@ -448,7 +556,7 @@ class _AsignaturaState extends State<Asignatura> {
         child: Row(
           children: [
                 SizedBox(
-                  width: 200,
+                  width: 180,
                   child: ListView(
                     shrinkWrap: true,
                     scrollDirection: Axis.horizontal,
@@ -501,16 +609,28 @@ class _AsignaturaState extends State<Asignatura> {
                           ),
                         ],
                       ),
+                      SizedBox(width: 15),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_month, color: Colors.white, size: 20,
+                          ), // Icono para la clase
+                          SizedBox(width: 5), // Espacio entre el icono y el texto (ubicación de la clase
+                          Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              widget.fecha_fin.toString().substring(0,10),
+                              style: TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   )
                 ),
-
                 Spacer(),
                 GestureDetector(
                   onTap: () {
-                    // Aquí puedes manejar el evento de edición
-                    print('Editar');
-                    widget.parentEditFunc(widget.nombre,widget.color,widget.ubicacion_clase,widget.ubicacion_laboratorio,widget.id);
+                    widget.parentEditFunc(widget.nombre,widget.color,widget.ubicacion_clase,widget.ubicacion_laboratorio,widget.id,widget.fecha_fin);
                   },
                   child: Container(
                     width: 30,
@@ -572,6 +692,25 @@ class _SesionDataSource extends CalendarDataSource {
 
   @override
   List<dynamic> get appointments => source;
+
+  @override
+  Widget getAppointmentView(Appointment appointment) {
+    print("hola");
+    final isLab = appointment.subject == 'Laboratorio'; // Asume que 'subject' contiene el tipo de sesión
+    return Container(
+      decoration: BoxDecoration(
+        color: isLab ? Colors.red : Colors.blue,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.black, width: 0.5),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(isLab ? Icons.science : Icons.school), // Asume que 'Icons.lab' e 'Icons.class' son los iconos para laboratorio y clase magistral respectivamente
+          Text(appointment.location ?? "No hay lugar"), // Asume que 'location' contiene el lugar de la sesión
+        ],
+      ),
+    );
+  }
 }
 
 
