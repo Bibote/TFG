@@ -5,8 +5,8 @@ import 'package:tfg/Educacion/Horario/horario_edu_bd.dart';
 
 class horarioBL {
 
-  static final horarioBL _singleton = new horarioBL._internal();
-  static final firestoreHorarioBD _db = new firestoreHorarioBD();
+  static final horarioBL _singleton = horarioBL._internal();
+  static final firestoreHorarioBD _db = firestoreHorarioBD();
   factory horarioBL() {
     return _singleton;
   }
@@ -31,32 +31,34 @@ class horarioBL {
     };
     List asignaturasBD = await _db.getSesiones();
     List<Appointment> sesionesCalendario = [];
-    asignaturasBD.forEach((asignatura) {
-      String ubiMag= asignatura['asignatura_data']['ubi_mag'];
-      String ubiLab= "";
-      if(asignatura['asignatura_data']['ubi_mag'] != null){
-        ubiMag = asignatura['asignatura_data']['ubi_lab'];
-      }
+    for (var asignatura in asignaturasBD) {
       RecurrenceProperties recursion = RecurrenceProperties(
                                         startDate:  DateTime.now(),
                                         endDate: (asignatura['asignatura_data']['fecha_fin'] as Timestamp).toDate(),
                                         recurrenceType: RecurrenceType.daily,
                                         interval : 7,
                                         recurrenceRange: RecurrenceRange.endDate,
-                                        //recurrenceCount: 20,
                                       );
       asignatura['sesiones'].forEach((sesion) {
         DateTime horaIni = (sesion['sesion_data']['hora_ini'] as Timestamp).toDate();
         DateTime horaFin = (sesion['sesion_data']['hora_fin'] as Timestamp).toDate();
         String lugar="";
-        if (asignatura['asignatura_data']['es_lab']==true){
-          lugar= ubiLab;
+        String tipo="";
+        if (sesion['sesion_data']['es_lab']==true){
+          tipo= "lab";
+          lugar= asignatura['asignatura_data']['ubi_lab'];
         } else {
-          lugar= ubiMag;
+          tipo= "mag";
+          lugar= asignatura['asignatura_data']['ubi_mag'];
         }
+        Map id = {
+          'asignatura_id': asignatura['asignatura_id'],
+          'sesion_id': sesion['sesion_id'],
+        };
+        print(sesion);
         sesionesCalendario.add(
             Appointment(
-              id: sesion['id'],
+              id: id,
               startTime: horaIni,
               endTime: horaFin,
               isAllDay: false,
@@ -68,11 +70,12 @@ class horarioBL {
                   horaIni,
                   horaFin
               ),
-              //recurrenceExceptionDates: sesion['asignatura']['excepciones'],
+              notes: tipo,
+              recurrenceExceptionDates: sesion['excepciones'],
             )
         );
       });
-    });
+    }
     return sesionesCalendario;
 
 
@@ -91,10 +94,46 @@ class horarioBL {
     print("map: ");
     print(map);
     String id = await _db.crearAsignatura(map);
+    print("id: ");
+    print(id);
     if(id != ""){
       return id;
     } else {
       return "";
     }
+  }
+
+  Future<List> getAsignaturas() async {
+    List asignaturasBD = await _db.getAsignaturas();
+    return asignaturasBD;
+  }
+
+  Future<String> crearSesion(asignatura, DateTime startTime, DateTime endTime, bool switchValue) async {
+    if(startTime.isAfter(endTime)){
+      return "Fechas incorrectas";
+    }
+    return await _db.crearSesion(asignatura, startTime, endTime, switchValue);
+
+  }
+
+  Future<bool> eliminarSesion(Object? id) async {
+    if (id is Map) {
+      return await _db.eliminarSesion(id);
+    } else {
+      return false;
+    }
+
+  }
+
+  Future<bool>nuevaExcepcion(Object? id, DateTime fecha) {
+    if (id is Map) {
+      return _db.nuevaExcepcion(id, fecha);
+    } else {
+      return Future.value(false);
+    }
+  }
+
+  Future<bool> eliminarAsignatura(String id) async {
+    return await _db.eliminarAsignatura(id);
   }
 }

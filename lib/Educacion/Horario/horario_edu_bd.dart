@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 class firestoreHorarioBD {
   final FirebaseFirestore db = FirebaseFirestore.instance;
 
-  static final firestoreHorarioBD _singleton = new firestoreHorarioBD._internal();
+  static final firestoreHorarioBD _singleton = firestoreHorarioBD._internal();
   factory firestoreHorarioBD() {
     return _singleton;
   }
@@ -14,7 +14,7 @@ class firestoreHorarioBD {
   Future<List<Map<String, dynamic>>> getAsignaturas() async {
     List<Map<String, dynamic>> asignaturas = [];
     await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").get().then((event) {
-      event.docs.forEach((element) {
+      for (var element in event.docs) {
         var asignatura = element.data();
         print("Asignaturabd: ");
         print(asignatura);
@@ -26,7 +26,7 @@ class firestoreHorarioBD {
           'ubicacion_laboratorio': asignatura['ubi_lab'],
           'fecha_fin': asignatura['fecha_fin'],
         });
-      });
+      }
     });
     return asignaturas;
   }
@@ -44,21 +44,22 @@ class firestoreHorarioBD {
 
   Future<String> crearAsignatura(Map<String, dynamic> asignatura) async {
     print("fecha fin: ${asignatura['fecha_fin']}");
-    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").add({
-      'nombre': asignatura['nombre'],
-      'color': asignatura['color'],
-      'ubi_mag': asignatura['ubicacion_clase'],
-      'ubi_lab': asignatura['ubicacion_laboratorio'],
-      'usuario': FirebaseAuth.instance.currentUser?.uid,
-      'fecha_fin': Timestamp.fromDate(asignatura['fecha_fin']),
-    }).then((value) {
-      print("Asignatura creada con id: ${value.id}");
-      return value.id;
-    }).catchError((error) {
+    try {
+      DocumentReference docRef = await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").add({
+        'nombre': asignatura['nombre'],
+        'color': asignatura['color'],
+        'ubi_mag': asignatura['ubicacion_clase'],
+        'ubi_lab': asignatura['ubicacion_laboratorio'],
+        'fecha_fin': Timestamp.fromDate(asignatura['fecha_fin']),
+      });
+      print("Asignatura creada con id: ${docRef.id}");
+      return docRef.id;
+    } catch (error) {
       print("Error al crear la asignatura: $error");
-    });
-    return "";
+      return "";
+    }
   }
+
 
   Future<bool> actualizarAsignatura(String id, Map<String, dynamic> asignatura) async {
 
@@ -92,6 +93,12 @@ class firestoreHorarioBD {
             'sesion_id' : sesion.id,
             'sesion_data' : sesion.data(),
           };
+          var excepciones = await db.collection("usuarios/${FirebaseAuth.instance.currentUser?.uid}/asignaturas/${element.id}/sesiones/${sesion.id}/excepciones").get();
+          List<DateTime> excepcionesList = [];
+          for (var excepcion in excepciones.docs) {
+            excepcionesList.add((excepcion.data()['fecha'] as Timestamp).toDate());
+          }
+          sesionData['excepciones'] = excepcionesList;
           sesiones.add(sesionData);
         }
         asignatura['sesiones'] = sesiones;
@@ -102,6 +109,47 @@ class firestoreHorarioBD {
     }
     return asignaturas;
   }
+
+  Future<String> crearSesion(asignatura, DateTime startTime, DateTime endTime, bool switchValue) {
+    return db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").doc(asignatura).collection("sesiones").add({
+      'hora_ini': Timestamp.fromDate(startTime),
+      'hora_fin': Timestamp.fromDate(endTime),
+      'es_lab': switchValue,
+    }).then((value) {
+      print("Sesion creada con id: ${value.id}");
+      return value.id;
+    }).catchError((error) {
+      print("Error al crear la sesion: $error");
+      return "";
+    });
+  }
+
+  Future<bool> eliminarSesion(Map id) async {
+
+    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").doc(id['asignatura_id']).collection('sesiones').doc(id['sesion_id']).delete().then((value) {
+      print("Sesion eliminada con id: $id");
+      return true;
+    }).catchError((error) {
+      print("Error al eliminar la sesion: $error");
+      return false;
+    });
+    return true;
+
+  }
+
+  Future<bool> nuevaExcepcion(Map id, DateTime fecha) async {
+    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid)
+        .collection("asignaturas").doc(id['asignatura_id']).collection(
+        'sesiones').doc(id['sesion_id']).collection('excepciones').add(
+        {
+          'fecha': Timestamp.fromDate(fecha),
+        }
+    ).then((value) => true)
+        .catchError((error) => false);
+    return false;
+  }
+
+
 
 }
 
