@@ -57,6 +57,7 @@ class _MyAppState extends State<MyApp> {
       navigatorKey: navigatorKey,
       title: 'Flutter Demo',
       theme: ThemeData(
+        useMaterial3: false,
         primarySwatch: Colors.indigo,
       ),
       darkTheme: ThemeData.dark(),

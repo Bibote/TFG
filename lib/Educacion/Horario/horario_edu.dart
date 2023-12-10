@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:tfg/Educacion/Horario/horario_edu_bl.dart';
+import 'package:tfg/resources.dart';
 
 
 List<Widget> _asignaturas = [];
@@ -14,20 +15,6 @@ List<Map> _asignaturasBD = [];
 
 _SesionDataSource? _dataSource;
 
-Map<String, Color> colorMap = {
-  'Rojo': Colors.red,
-  'Verde': Colors.green,
-  'Azul': Colors.blue,
-  'Amarillo': Colors.yellow,
-  'Naranja': Colors.orange,
-  'Rosa': Colors.pink,
-  'Morado': Colors.purple,
-  'Cian': Colors.cyan,
-  'Marrón': Colors.brown,
-  'Gris': Colors.grey,
-  'Lima': Colors.lime,
-  'Índigo': Colors.indigo,
-};
 
 class pantallaHorario extends StatefulWidget {
   const pantallaHorario({Key? key}) : super(key: key);
@@ -63,6 +50,7 @@ class _pantallaHorarioState extends State<pantallaHorario> {
     }
     List<Appointment> sesiones = await bl.getSesiones();
     setState(() {
+      print(sesiones);
       _dataSource = _SesionDataSource(sesiones);
     });
   }
@@ -82,7 +70,6 @@ class _pantallaHorarioState extends State<pantallaHorario> {
           onTap: calendarTap,
           appointmentBuilder: AppointmentBuilder,
           timeSlotViewSettings: const TimeSlotViewSettings(
-            //startHour: 8,
             timeIntervalHeight: 60,
             timeIntervalWidth: 100,
             timeInterval: Duration(minutes: 60),
@@ -199,6 +186,7 @@ class _pantallaHorarioState extends State<pantallaHorario> {
                 child: const Text('Eliminar Serie'),
                 onPressed: () async {
                   if(await horarioBL().eliminarSesion(appointment.id )) {
+
                     _dataSource?.appointments.remove(appointment);
                     _dataSource?.notifyListeners(CalendarDataSourceAction.remove,
                         <Appointment>[appointment]);

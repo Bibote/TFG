@@ -16,8 +16,6 @@ class firestoreHorarioBD {
     await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").get().then((event) {
       for (var element in event.docs) {
         var asignatura = element.data();
-        print("Asignaturabd: ");
-        print(asignatura);
         asignaturas.add({
           'id': element.id,
           'nombre': asignatura['nombre'],

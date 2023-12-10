@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:tfg/Educacion/Calendario/entregas_ed_bl.dart';
 import 'package:tfg/Educacion/Horario/horario_edu_bl.dart';
 
 
@@ -14,14 +14,17 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   _ClasesDataSource? _dataSource;
+  _ClasesDataSource? _dataSourceEventos;
 
   @override
   void initState() {
-    super.initState();
     getSesiones();
+    getEventos();
+    super.initState();
   }
   @override
   Widget build(BuildContext context) {
+
     return GridView.count(
         crossAxisCount: 2,
         children: [
@@ -29,10 +32,13 @@ class _DashboardState extends State<Dashboard> {
             view: CalendarView.schedule,
             firstDayOfWeek: 1,
             dataSource: _dataSource,
-
           ),
           Placeholder(),
-          Placeholder(),
+          SfCalendar(
+            view: CalendarView.schedule,
+            firstDayOfWeek: 1,
+            dataSource: _dataSourceEventos,
+          ),
           Placeholder(),
           Placeholder(),
         ],
@@ -45,6 +51,15 @@ class _DashboardState extends State<Dashboard> {
     List<Appointment> sesiones = await bl.getSesiones();
     setState(() {
       _dataSource = _ClasesDataSource(sesiones);
+    });
+  }
+  Future<void> getEventos() async {
+    final EntregasBL bl = EntregasBL();
+    Map sesiones = await bl.getEventos();
+    setState(() {
+      _dataSourceEventos = _ClasesDataSource([...sesiones['entregas'],...sesiones['examenes'],...sesiones['eventos']]);
+      print("Eventos");
+      print(_dataSourceEventos);
     });
   }
 }

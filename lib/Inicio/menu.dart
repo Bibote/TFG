@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:tfg/Educacion/Calendario/Calendario_edu.dart';
+import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
 import 'package:tfg/Educacion/horario/horario_edu.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
 import 'package:tfg/main.dart';
@@ -62,11 +62,11 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(MyHomePage());
+                cambioPagina(EntregasPage());
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.calendar_month, size: 32),
-              label: Text("Entregas")
+              label: Text("Entregas/Examenes")
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(

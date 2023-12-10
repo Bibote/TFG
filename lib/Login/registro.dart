@@ -126,7 +126,7 @@ class _RegistroWidgetState extends State<RegistroWidget>{
                       recognizer: TapGestureRecognizer()..onTap = () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => App()),
+                          MaterialPageRoute(builder: (context) => const App()),
                         );
                       },
                       text: 'Iniciar sesión',
@@ -169,7 +169,7 @@ class _RegistroWidgetState extends State<RegistroWidget>{
           await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).set({
             'email': emailController.text.trim(),
           });
-          Navigator.push(context, MaterialPageRoute(builder: (context) => Menu()),);
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const Menu()),);
         } on FirebaseAuthException catch(e) {
           if (e.code == 'weak-password') {
             cambioError("La contraseña es demasiado débil");
