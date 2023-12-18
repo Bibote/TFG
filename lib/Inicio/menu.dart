@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
 import 'package:tfg/Educacion/horario/horario_edu.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
+import 'package:tfg/Ocio/Calendario/calendario_oci.dart';
 import 'package:tfg/main.dart';
 
 
@@ -74,11 +75,11 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(Text("Planificador de examenes"));
+                cambioPagina(Text("Pomodoro"));
                 Navigator.pop(context);
               },
-              icon: const Icon(Icons.menu_book_outlined, size: 32),
-              label: Text("Planificador de examenes")
+              icon: const Icon(Icons.alarm, size: 32),
+              label: Text("Pomodoro")
           ),
         ],
       ),
@@ -90,23 +91,11 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(Text("Calendario"));
+                cambioPagina(EventosPage());
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.calendar_month, size: 32),
               label: Text("Calendario")
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(250, 50),
-              ),
-              onPressed: () {
-                cambioPagina(Text("Gastos"));
-                Navigator.pop(context);
-              },
-              icon: const Icon(Icons.euro, size: 32),
-              label: Text("Gastos")
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(
@@ -119,18 +108,6 @@ class _MenuState extends State<Menu> {
               },
               icon: const Icon(Icons.restaurant, size: 32),
               label: Text("Donde comemos?")
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(250, 50),
-              ),
-              onPressed: () {
-                cambioPagina(Text("Valoración restaurantes"));
-                Navigator.pop(context);
-              },
-              icon: const Icon(Icons.restaurant_menu, size: 32),
-              label: Text("Valoración restaurantes")
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(

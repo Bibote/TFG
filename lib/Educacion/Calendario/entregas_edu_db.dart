@@ -77,6 +77,4 @@ class EntregaBD {
     return asignaturas;
   }
 
-
-
 }

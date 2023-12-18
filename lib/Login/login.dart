@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:tfg/inicio/menu.dart';
 import 'package:tfg/Login/registro.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
@@ -88,6 +87,9 @@ class _LoginWidgetState extends State<LoginWidget> {
                 const SizedBox(height: 20),
                 RichText(
                   text: TextSpan(
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                    ),
                     text: '¿No tienes una cuenta? ',
                     children: [
                       TextSpan(
@@ -99,8 +101,8 @@ class _LoginWidgetState extends State<LoginWidget> {
                             );
                           },
                         text: 'Registrarse',
-                        style: const TextStyle(
-                          color: Colors.blue,
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.blue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -164,6 +166,10 @@ class _LoginWidgetState extends State<LoginWidget> {
   }
 
   Future signIn() async {
+    if (emailController.text.trim().isEmpty || passwordController.text.trim().isEmpty) {
+      cambioError("Rellene todos los campos.");
+      return;
+    }
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -181,6 +187,7 @@ class _LoginWidgetState extends State<LoginWidget> {
       } else if (e.code == 'user-disabled') {
         cambioError('Usuario deshabilidado.');
       } else {
+        print(e);
         cambioError('Ha ocurrido un error con el servidor pruebe en otro momento.');
       }
     }
@@ -195,8 +202,6 @@ class _LoginWidgetState extends State<LoginWidget> {
       idToken: googleAuth.idToken,
     );
     FirebaseFirestore db = FirebaseFirestore.instance;
-
-
 
     showDialog(
         context: context,
@@ -216,7 +221,10 @@ class _LoginWidgetState extends State<LoginWidget> {
       });
     } on FirebaseAuthException catch (e) {
       cambioError("Ha ocurrido un error con el servidor pruebe en otro momento.");
+      print(e);
+      navigatorKey.currentState!.popUntil((route) => route.isFirst);
     }
     navigatorKey.currentState!.popUntil((route) => route.isFirst);
+
   }
 }

@@ -121,6 +121,9 @@ class _RegistroWidgetState extends State<RegistroWidget>{
               RichText(
                 text: TextSpan(
                   text: '¿Ya tienes una cuenta? ',
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                  ),
                   children: [
                     TextSpan(
                       recognizer: TapGestureRecognizer()..onTap = () {
@@ -175,12 +178,18 @@ class _RegistroWidgetState extends State<RegistroWidget>{
             cambioError("La contraseña es demasiado débil");
           } else if (e.code == 'email-already-in-use') {
             cambioError("Ya existe una cuenta con ese email");
+          } else if(e.code == 'invalid-email'){
+            cambioError("Email no válido");
+          }
+          else {
+            print(e.code);
+            cambioError("Error desconocido");
           }
         }
       } else {
         cambioError("Las contraseñas no coinciden");
       }
-      navigatorKey.currentState!.popUntil((route) => route.isFirst);
+      navigatorKey.currentState!.pop();
     }
   }
 

@@ -201,7 +201,7 @@ class _EntregasPageState extends State<EntregasPage> {
 
   void crearSesion(BuildContext context, DateTime selectedDate) {
     final List<bool> tipo = <bool>[true, false, false];
-    DateTime hora = selectedDate;
+    DateTime hora = selectedDate.add(const Duration(hours: 12));
     String? asignaturaSeleccionada = _asignaturasBD[0]['nombre'];
     TextEditingController _nombreController = TextEditingController();
     showDialog(

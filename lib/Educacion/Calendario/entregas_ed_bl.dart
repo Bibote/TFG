@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:tfg/Educacion/Calendario/entregas_edu_db.dart';
 import 'package:tfg/resources.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class EntregasBL {
 
@@ -86,6 +91,7 @@ class EntregasBL {
 
 
   Future<String> crearEvento(asignatura, DateTime hora, String nombre, int tipo) async {
+    programarNotificacion(hora, nombre, tipo);
 
     return await _db.crearEvento(asignatura, hora, nombre, tipo);
 
@@ -99,61 +105,46 @@ class EntregasBL {
     }
   }
 
-  /*
-  Future<bool>actualizarAsignatura(String preId, Map<String, Object> map) async {
-    if(await _db.actualizarAsignatura(preId, map)){
-      return true;
-    } else {
-      return false;
+  void programarNotificacion(DateTime hora, String nombre, int tipo) async {
+    var permiso = await Permission.notification.status;
+    if(permiso.isDenied){
+      print("pidiendo permiso");
+      await Permission.notification.request();
     }
+    print(permiso.isDenied);
+    print(permiso);
+    print("notificacion programada");
+
+
+    FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
+    var androidInitialize = AndroidInitializationSettings('@mipmap/ic_launcher');
+    var iOSInitialize = DarwinInitializationSettings();
+    var initSettings = InitializationSettings(android: androidInitialize, iOS: iOSInitialize);
+    flnp.initialize(initSettings);
+
+    var androidDetails = const AndroidNotificationDetails(
+      'channelId', // El identificador único del canal de notificaciones
+      'channelName', // El nombre del canal de notificaciones
+      importance: Importance.max, // La importancia de la notificación (alto, medio o bajo)
+    );
+
+    var iOSDetails = DarwinNotificationDetails();
+    var details = NotificationDetails(android: androidDetails, iOS: iOSDetails);
+
+    final scheduledDate = tz.TZDateTime.from(hora, tz.local);
+
+
+    await flnp.zonedSchedule(
+      0,
+      'Título de la Notificación',
+      'Cuerpo de la Notificación',
+      scheduledDate,
+      details,
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    print("notificacion programada a las: "+scheduledDate.toString());
   }
-
-  Future<String>crearAsignatura(Map<String, Object?> map) async {
-    print("map: ");
-    print(map);
-    String id = await _db.crearAsignatura(map);
-    print("id: ");
-    print(id);
-    if(id != ""){
-      return id;
-    } else {
-      return "";
-    }
-  }
-
-  Future<List> getAsignaturas() async {
-    List asignaturasBD = await _db.getAsignaturas();
-    return asignaturasBD;
-  }
-
-  Future<String> crearSesion(asignatura, DateTime startTime, DateTime endTime, bool switchValue) async {
-    if(startTime.isAfter(endTime)){
-      return "Fechas incorrectas";
-    }
-    return await _db.crearSesion(asignatura, startTime, endTime, switchValue);
-
-  }
-
-  Future<bool> eliminarSesion(Object? id) async {
-    if (id is Map) {
-      return await _db.eliminarSesion(id);
-    } else {
-      return false;
-    }
-
-  }
-
-  Future<bool>nuevaExcepcion(Object? id, DateTime fecha) {
-    if (id is Map) {
-      return _db.nuevaExcepcion(id, fecha);
-    } else {
-      return Future.value(false);
-    }
-  }
-
-  Future<bool> eliminarAsignatura(String id) async {
-    return await _db.eliminarAsignatura(id);
-  }
-  */
 
 }
