@@ -12,11 +12,12 @@ class EntregaBD {
   EntregaBD._internal();
 
 
-  Future<String> crearEvento(asignatura, DateTime hora, String nombre, int tipo) {
+  Future<String> crearEvento(asignatura, DateTime hora, String nombre, int tipo, int idNoti) {
     return db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").doc(asignatura).collection("eventos").add({
       'hora': Timestamp.fromDate(hora),
       'nombre': nombre,
       'tipo': tipo+1,
+      'idNoti': idNoti,
     }).then((value) {
       print("Sesion creada con id: ${value.id}");
       return value.id;

@@ -33,9 +33,7 @@ class _EntregasPageState extends State<EntregasPage> {
   initState() {
     getAsignaturas();
     getEventos();
-    setState(() {
-      _dataSource = _EntregasDataSource([..._entregas,..._examenes,..._eventos]);
-    });
+    filtrar();
     super.initState();
   }
   Future<void> getEventos() async {

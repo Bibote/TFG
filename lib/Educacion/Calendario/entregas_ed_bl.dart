@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:tfg/Educacion/Calendario/entregas_edu_db.dart';
+import 'package:tfg/notification_manager/notification_manager.dart';
 import 'package:tfg/resources.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -91,9 +92,15 @@ class EntregasBL {
 
 
   Future<String> crearEvento(asignatura, DateTime hora, String nombre, int tipo) async {
-    programarNotificacion(hora, nombre, tipo);
+    int idNoti = DateTime.now().millisecondsSinceEpoch% (1 << 31);
+    String id= await _db.crearEvento(asignatura, hora, nombre, tipo, idNoti);
 
-    return await _db.crearEvento(asignatura, hora, nombre, tipo);
+    if(id!="") {
+      programarNotificacion(idNoti, hora, nombre, tipo);
+      return id;
+    } else {
+      return "";
+    }
 
   }
 
@@ -105,46 +112,20 @@ class EntregasBL {
     }
   }
 
-  void programarNotificacion(DateTime hora, String nombre, int tipo) async {
+  void programarNotificacion(int id,DateTime hora, String nombre, int tipo) async {
     var permiso = await Permission.notification.status;
     if(permiso.isDenied){
-      print("pidiendo permiso");
       await Permission.notification.request();
     }
-    print(permiso.isDenied);
-    print(permiso);
-    print("notificacion programada");
 
+    if(tipo== 0){
+      NotificationManager().scheduleNotification(id,"Examen en 1 hora", "Tienes examen: "+nombre, hora.add(Duration(hours: -1)));
+    }else if(tipo== 1){
+      NotificationManager().scheduleNotification(id,"Entrega en 1 hora", "Tienes entrega "+nombre,  hora.add(Duration(hours: -1)));
+    }else {
+      NotificationManager().scheduleNotification(id,"Evento en 1 hora", "Tienes evento "+nombre,  hora.add(Duration(hours: -1)));
+    }
 
-    FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
-    var androidInitialize = AndroidInitializationSettings('@mipmap/ic_launcher');
-    var iOSInitialize = DarwinInitializationSettings();
-    var initSettings = InitializationSettings(android: androidInitialize, iOS: iOSInitialize);
-    flnp.initialize(initSettings);
-
-    var androidDetails = const AndroidNotificationDetails(
-      'channelId', // El identificador único del canal de notificaciones
-      'channelName', // El nombre del canal de notificaciones
-      importance: Importance.max, // La importancia de la notificación (alto, medio o bajo)
-    );
-
-    var iOSDetails = DarwinNotificationDetails();
-    var details = NotificationDetails(android: androidDetails, iOS: iOSDetails);
-
-    final scheduledDate = tz.TZDateTime.from(hora, tz.local);
-
-
-    await flnp.zonedSchedule(
-      0,
-      'Título de la Notificación',
-      'Cuerpo de la Notificación',
-      scheduledDate,
-      details,
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-    );
-
-    print("notificacion programada a las: "+scheduledDate.toString());
   }
 
 }

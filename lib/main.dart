@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tfg/Inicio/menu.dart';
 import 'package:tfg/Login/login.dart';
+import 'package:tfg/notification_manager/notification_manager.dart';
 import 'firebase_options.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:syncfusion_localizations/syncfusion_localizations.dart';
@@ -18,6 +19,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   tz.initializeTimeZones();
+  NotificationManager().initNotification();
   runApp(const MyApp());
 
 
