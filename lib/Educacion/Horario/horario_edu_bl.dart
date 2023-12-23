@@ -55,7 +55,6 @@ class horarioBL {
           'asignatura_id': asignatura['asignatura_id'],
           'sesion_id': sesion['sesion_id'],
         };
-        print(sesion);
         sesionesCalendario.add(
             Appointment(
               id: id,
@@ -91,11 +90,7 @@ class horarioBL {
   }
 
   Future<String>crearAsignatura(Map<String, Object?> map) async {
-    print("map: ");
-    print(map);
     String id = await _db.crearAsignatura(map);
-    print("id: ");
-    print(id);
     if(id != ""){
       return id;
     } else {

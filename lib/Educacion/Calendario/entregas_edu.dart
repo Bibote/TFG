@@ -33,7 +33,6 @@ class _EntregasPageState extends State<EntregasPage> {
   initState() {
     getAsignaturas();
     getEventos();
-    filtrar();
     super.initState();
   }
   Future<void> getEventos() async {
@@ -85,6 +84,7 @@ class _EntregasPageState extends State<EntregasPage> {
 
   @override
   Widget build(BuildContext context) {
+    filtrar();
     return Scaffold(
         body: Padding(
           padding: const EdgeInsets.all(8.0),

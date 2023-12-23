@@ -66,8 +66,6 @@ class _DashboardState extends State<Dashboard> {
     Map sesiones = await bl.getEventos();
     setState(() {
       _dataSourceEventos = _ClasesDataSource([...sesiones['entregas'],...sesiones['examenes'],...sesiones['eventos']]);
-      print("Eventos");
-      print(_dataSourceEventos);
     });
   }
 }

@@ -121,9 +121,9 @@ class EntregasBL {
     if(tipo== 0){
       NotificationManager().scheduleNotification(id,"Examen en 1 hora", "Tienes examen: "+nombre, hora.add(Duration(hours: -1)));
     }else if(tipo== 1){
-      NotificationManager().scheduleNotification(id,"Entrega en 1 hora", "Tienes entrega "+nombre,  hora.add(Duration(hours: -1)));
+      NotificationManager().scheduleNotification(id,"Entrega en 1 hora", "Tienes entrega: "+nombre,  hora.add(Duration(hours: -1)));
     }else {
-      NotificationManager().scheduleNotification(id,"Evento en 1 hora", "Tienes evento "+nombre,  hora.add(Duration(hours: -1)));
+      NotificationManager().scheduleNotification(id,"Evento en 1 hora", "Tienes evento: "+nombre,  hora.add(Duration(hours: -1)));
     }
 
   }

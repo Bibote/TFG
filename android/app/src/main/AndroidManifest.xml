@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.tfg">
-   <application
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <application
         android:label="tfg"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
@@ -43,4 +47,5 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.CAMERA" />
 </manifest>

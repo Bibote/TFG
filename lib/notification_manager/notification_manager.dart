@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationManager {
@@ -15,13 +16,17 @@ class NotificationManager {
     await notificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveBackgroundNotificationResponse: (details) {
-
         }
     );
 
   }
 
   Future<void> simpleNotificacitonShow() async {
+    var permissions = await Permission.notification.status;
+    print(permissions);
+    if (permissions.isDenied) {
+      await Permission.notification.request();
+    }
     var androidNotificationDetails = const AndroidNotificationDetails(
       '1',
       'channelName1',
@@ -37,6 +42,11 @@ class NotificationManager {
   }
 
   Future<void> scheduleNotification(int id,String titulo, String cuerpo, DateTime hora) async {
+    var permissions = await Permission.notification.status;
+    print(permissions);
+    if (permissions.isDenied) {
+      await Permission.notification.request();
+    }
     var androidNotificationDetails = const AndroidNotificationDetails(
       '2',
       'channelName2',
@@ -54,7 +64,7 @@ class NotificationManager {
         cuerpo,
         tz.TZDateTime.from(hora, tz.local),
         notificationDetails,
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle ,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   }

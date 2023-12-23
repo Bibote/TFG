@@ -4,6 +4,7 @@ import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
 import 'package:tfg/Educacion/horario/horario_edu.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
 import 'package:tfg/Ocio/Calendario/calendario_oci.dart';
+import 'package:tfg/Ocio/Grupos/grupos.dart';
 import 'package:tfg/main.dart';
 
 
@@ -96,6 +97,18 @@ class _MenuState extends State<Menu> {
               },
               icon: const Icon(Icons.calendar_month, size: 32),
               label: Text("Calendario")
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(250, 50),
+              ),
+              onPressed: () {
+                cambioPagina(pantallaGrupos());
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.people, size: 32),
+              label: Text("Grupos")
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(
