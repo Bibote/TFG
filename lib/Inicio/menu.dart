@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
-import 'package:tfg/Educacion/horario/horario_edu.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
+import 'package:tfg/Inicio/menu_bl.dart';
 import 'package:tfg/Ocio/Calendario/calendario_oci.dart';
 import 'package:tfg/Ocio/Grupos/grupos.dart';
+import 'package:tfg/Ocio/Restaurantes/restaurantes.dart';
 import 'package:tfg/main.dart';
+
+import '../Educacion/Horario/horario_edu.dart';
 
 
 class Menu extends StatefulWidget {
@@ -19,10 +22,19 @@ class _MenuState extends State<Menu> {
   final List<bool> _selectedModo = <bool>[true, false];
   final List<bool> _selectedLuz = <bool>[false, false, true];
   Widget _pantalla= Dashboard();
+  String _user = "";
+  @override
+  void initState() {
+    menuBL().getNombre().then((value) {
+      setState(() {
+        _user =value;
+      });
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
 
     if (MyApp.of(context).getTheme() == ThemeMode.light) {
       _selectedLuz[0] = true;
@@ -116,7 +128,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(Text("Donde comemos?"));
+                cambioPagina(pantallaRestaurantes());
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.restaurant, size: 32),
@@ -165,15 +177,15 @@ class _MenuState extends State<Menu> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                            user!.email!,
+                            _user,
                             style: const TextStyle(fontSize: 15),
                             ),
                       ),
                       IconButton(
-                        onPressed: () async {
-                          await FirebaseAuth.instance.signOut();
+                        onPressed: ()  {
+                          editarNombre();
                         },
-                        icon: const Icon(Icons.logout),
+                        icon: const Icon(Icons.edit),
                       ),
 
                   ],
@@ -245,10 +257,9 @@ class _MenuState extends State<Menu> {
                      ),
                      const Spacer(),
                      IconButton(
-                         icon: const Icon(Icons.settings,size: 32),
-                         onPressed: () {
-                           cambioPagina(Text("Ajustes"));
-                           Navigator.pop(context);
+                         icon: const Icon(Icons.logout_outlined,size: 32),
+                         onPressed: () async {
+                           await FirebaseAuth.instance.signOut();
                          }
                      ),
                    ],
@@ -258,6 +269,43 @@ class _MenuState extends State<Menu> {
           ),
         ),
       )
+    );
+  }
+  void editarNombre() {
+    var nombreController = TextEditingController();
+    nombreController.text = _user;
+    showDialog(context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Editar nombre"),
+            content: TextField(
+              controller: nombreController,
+              onChanged: (String value) {
+                _user = value;
+              },
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Cancelar")
+              ),
+              TextButton(
+                  onPressed: () async {
+                    bool resul = await menuBL().setNombre(_user);
+                    if(resul){
+                      setState(() {
+                        _user = nombreController.text;
+                      });
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Aceptar")
+              ),
+            ],
+          );
+        }
     );
   }
 }

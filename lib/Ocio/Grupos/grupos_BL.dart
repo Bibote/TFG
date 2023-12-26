@@ -46,5 +46,9 @@ class gruposBL {
     return await gruposBD().salirGrupo(idGrupo, idPersona);
   }
 
+  Future<bool> modificarGrupo(String preId, String nombre, String contra, String color) async {
+    return await gruposBD().modificarGrupo(preId, nombre, contra, color);
+  }
+
 
 }

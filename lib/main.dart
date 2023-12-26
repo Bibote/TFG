@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tfg/Inicio/menu.dart';
 import 'package:tfg/Login/login.dart';
@@ -20,6 +21,7 @@ void main() async {
   );
   tz.initializeTimeZones();
   NotificationManager().initNotification();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 
 
@@ -63,7 +65,9 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: false,
         primarySwatch: Colors.indigo,
       ),
-      darkTheme: ThemeData.dark(),
+      darkTheme: ThemeData.dark(
+        useMaterial3: false
+      ),
       themeMode: _themeMode,
       home: App(),
     );

@@ -5,7 +5,9 @@ import 'package:flutter/gestures.dart';
 import 'package:tfg/Login/login.dart';
 import 'package:tfg/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tfg/inicio/menu.dart';
+
+import '../Inicio/menu.dart';
+
 
 
 class Registro extends StatelessWidget {

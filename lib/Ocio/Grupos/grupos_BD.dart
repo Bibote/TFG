@@ -220,4 +220,17 @@ class gruposBD  {
     });
     return true;
   }
+
+  Future<bool>modificarGrupo(String preId, String nombre, String contra, String color) async {
+    await db.collection('grupos').doc(preId).update({
+      'nombre': nombre,
+      'color': color,
+      'contra': contra,
+    }).then((value) {
+      return true;
+    }).catchError((error) {
+      return false;
+    });
+    return true;
+  }
 }

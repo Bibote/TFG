@@ -28,6 +28,7 @@ class _pantallaGruposState extends State<pantallaGrupos> {
             esAdmin: element['grupo_data']['admin'] == FirebaseAuth.instance.currentUser?.uid,
             secreto: element['grupo_data']['secreto'],
             borradPadre: menosAsignatura,
+            editPadre: crearGrupo,
           ));
         }
       });
@@ -178,36 +179,78 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                         );
                       }else {
                         //AQUI SE CREA
-                        Map result = await gruposBL().crearGrupo(nombreController.text, contraController.text, color);
-                        if(result.containsKey('error')){
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text('Error'),
-                                content: Text(result['error']),
-                                actions: <Widget>[
-                                  ElevatedButton(
-                                    child: Text('Close'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }else {
-                          setState(() {
-                            grupos.add(tarjetaGrupo(
-                              nombre: nombreController.text,
-                              color: color,
-                              id: result['idGrupo'],
-                              esAdmin: true,
-                              secreto: result['secreto'],
-                              borradPadre: menosAsignatura,
-                            ));
-                          });
+                        if(preId==null) {
+                          Map result = await gruposBL().crearGrupo(
+                              nombreController.text, contraController.text,
+                              color);
+                          if (result.containsKey('error')) {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Error'),
+                                  content: Text(result['error']),
+                                  actions: <Widget>[
+                                    ElevatedButton(
+                                      child: Text('Close'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            setState(() {
+                              grupos.add(tarjetaGrupo(
+                                nombre: nombreController.text,
+                                color: color,
+                                id: result['idGrupo'],
+                                esAdmin: true,
+                                secreto: result['secreto'],
+                                borradPadre: menosAsignatura,
+                                editPadre: crearGrupo,
+                              ));
+                            });
+                          }
+                        }else{
+
+                          bool resul = await gruposBL().modificarGrupo(preId, nombreController.text, contraController.text, color);
+                          if(resul){
+                            setState(() {
+                              grupos.removeWhere((element) => element.id == preId);
+                              grupos.add(tarjetaGrupo(
+                                nombre: nombreController.text,
+                                color: color,
+                                id: preId,
+                                esAdmin: true,
+                                secreto: "",
+                                borradPadre: menosAsignatura,
+                                editPadre: crearGrupo,
+                              ));
+                            });
+                          }else{
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Error'),
+                                  content: Text("Error al modificar el grupo"),
+                                  actions: <Widget>[
+                                    ElevatedButton(
+                                      child: Text('Close'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          }
+
+
                         }
 
                         Navigator.pop(context);
@@ -268,6 +311,7 @@ class _pantallaGruposState extends State<pantallaGrupos> {
             esAdmin: resul['admin'] == FirebaseAuth.instance.currentUser?.uid,
             secreto: resul['secreto'],
             borradPadre: menosAsignatura,
+            editPadre: crearGrupo,
           ));
         });
       });
@@ -366,13 +410,14 @@ class _pantallaGruposState extends State<pantallaGrupos> {
 }
 
 class tarjetaGrupo extends StatefulWidget {
-  const tarjetaGrupo({super.key, required this.nombre, required this.color, required this.id, required this.esAdmin, required this.secreto, required this.borradPadre});
+  const tarjetaGrupo({super.key, required this.nombre, required this.color, required this.id, required this.esAdmin, required this.secreto, required this.borradPadre, required this.editPadre});
   final String nombre;
   final String color;
   final String id;
   final bool esAdmin;
   final String secreto;
   final Function borradPadre;
+  final Function editPadre;
 
   @override
   _tarjetaGrupoState createState() => _tarjetaGrupoState();
@@ -423,6 +468,16 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
               ),
             ),
             if(widget.esAdmin)...[
+              GestureDetector(
+                onTap: () {
+                  widget.editPadre(widget.nombre, widget.color, widget.id);
+                },
+                child: const SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: Icon(Icons.edit, color: Colors.white),
+                ),
+              ),
               SizedBox(width: 10),
               GestureDetector(
                 onTap: () async {
