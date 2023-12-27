@@ -170,6 +170,15 @@ class gruposBD  {
       }
     }).catchError((error) {
     });
+
+    //hay que eliminar la coleccion de usuarios del grupo
+    await db.collection('grupos').doc(id).collection("usuarios").get().then((value) {
+      for (var element in value.docs) {
+        element.reference.delete();
+      }
+    }).catchError((error) {
+    });
+
     //ahora hay que eliminar el grupo
     await db.collection('grupos').doc(id).delete().then((value) {
       print("Grupo eliminado con id: $id");
