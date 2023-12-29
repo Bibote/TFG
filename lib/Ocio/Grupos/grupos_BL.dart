@@ -2,6 +2,8 @@
 
 import 'dart:math';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:tfg/Ocio/Grupos/grupos_BD.dart';
 
 class gruposBL {
@@ -48,6 +50,21 @@ class gruposBL {
 
   Future<bool> modificarGrupo(String preId, String nombre, String contra, String color) async {
     return await gruposBD().modificarGrupo(preId, nombre, contra, color);
+  }
+
+  Future<List<PlaceDetails>> getRestaurantes(String idGrupo) async {
+    List restaurantes = await gruposBD().getRestaurantes(idGrupo);
+    List<PlaceDetails> datosRestaurantes = [];
+    //Obtener los datos de los restaurantes
+    GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: dotenv.env['GOOGLE_API']);
+    for (var element in restaurantes) {
+      await _places.getDetailsByPlaceId(element).then((value) {
+        if(value.status == 'OK') {
+          datosRestaurantes.add(value.result);
+        }
+      });
+    }
+    return datosRestaurantes;
   }
 
 

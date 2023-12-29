@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
 import 'package:tfg/Inicio/menu_bl.dart';
@@ -22,6 +23,7 @@ class _MenuState extends State<Menu> {
   final List<bool> _selectedModo = <bool>[true, false];
   final List<bool> _selectedLuz = <bool>[false, false, true];
   Widget _pantalla= Dashboard();
+  String titulo = "Menu Principal";
   String _user = "";
   @override
   void initState() {
@@ -49,11 +51,13 @@ class _MenuState extends State<Menu> {
       _selectedLuz[1] = false;
       _selectedLuz[2] = true;
     }
-    void cambioPagina(Widget pagina) {
+    void cambioPagina(Widget pagina, String titulo) {
       setState(() {
+        this.titulo = titulo;
         _pantalla = pagina;
       });
     }
+
 
     final List<Widget> _menus = <Widget>[
       //Botones de la parte académica
@@ -64,7 +68,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(pantallaHorario());
+                cambioPagina(pantallaHorario(), "Horario de clases");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.calendar_month, size: 32),
@@ -76,7 +80,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(EntregasPage());
+                cambioPagina(EntregasPage(), "Calendario de entregas");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.calendar_month, size: 32),
@@ -88,7 +92,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(Text("Pomodoro"));
+                cambioPagina(Text("Pomodoro"), "Pomodoro");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.alarm, size: 32),
@@ -104,7 +108,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(EventosPage());
+                cambioPagina(EventosPage(), "Calendario de eventos");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.calendar_month, size: 32),
@@ -116,7 +120,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(pantallaGrupos());
+                cambioPagina(pantallaGrupos(), "Grupos");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.people, size: 32),
@@ -128,7 +132,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(pantallaRestaurantes());
+                cambioPagina(pantallaRestaurantes(),"Seleccionador de restaurantes");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.restaurant, size: 32),
@@ -140,7 +144,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(Text("Actividades"));
+                cambioPagina(Text("Actividades"), "Actividades");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.celebration_rounded, size: 32),
@@ -152,11 +156,11 @@ class _MenuState extends State<Menu> {
     return Scaffold(
       key: _key,
       appBar: AppBar(
-        title: const Text('Menu'),
+        title: Text(titulo),
         actions: [
           IconButton(
             onPressed: () {
-              cambioPagina(const Dashboard());
+              cambioPagina(const Dashboard(), "Menu Principal");
             },
             icon: const Icon(Icons.home),
           ),
@@ -229,21 +233,22 @@ class _MenuState extends State<Menu> {
                    mainAxisAlignment: MainAxisAlignment.start,
                    children: [
                      ToggleButtons(
-                       onPressed: (int index) {
+                       onPressed: (int index) async {
+                         ThemeMode themeMode;
+                          for (int i = 0; i < _selectedLuz.length; i++) {
+                            _selectedLuz[i] = i == index;
+                          }
+                         if(_selectedLuz[0]){
+                           themeMode = ThemeMode.light;
+                         }else if(_selectedLuz[1]){
+                            themeMode = ThemeMode.dark;
+                         } else{
+                            themeMode = ThemeMode.system;
+                         }
                          setState(() {
                            // The button that is tapped is set to true, and the others to false.
-                           for (int i = 0; i < _selectedLuz.length; i++) {
-                             _selectedLuz[i] = i == index;
-                           }
-                           if(_selectedLuz[0]){
-                              MyApp.of(context).changeTheme(
-                                  ThemeMode.light
-                              );
-                           }else if(_selectedLuz[1]){
-                              MyApp.of(context).changeTheme(ThemeMode.dark);
-                           } else{
-                             MyApp.of(context).changeTheme(ThemeMode.system);
-                           }
+                           MyApp.of(context).changeTheme(themeMode);
+
                          });
                        },
                        constraints: const BoxConstraints(minWidth: 60, minHeight: 30),

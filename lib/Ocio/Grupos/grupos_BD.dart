@@ -242,4 +242,26 @@ class gruposBD  {
     });
     return true;
   }
+
+  Future<List> getRestaurantes(String idGrupo) async {
+    List restaurantes = [];
+    await db.collection('grupos').doc(idGrupo).collection("usuarios").get().then((value) async {
+      for (var element in value.docs) {
+        List restaurantePersonal =[];
+        await db.collection('usuarios').doc(element.data()['id']).collection("restaurantes").where('like', isEqualTo: true).get().then((value) {
+          for (var element in value.docs) {
+            restaurantePersonal.add(element.id);
+          }
+        });
+        if(restaurantes.isEmpty) {
+          restaurantes = restaurantePersonal;
+        }else{
+          restaurantes = restaurantes.toSet().intersection(restaurantePersonal.toSet()).toList();
+        }
+      }
+    }).catchError((error) {
+      print("Error al obtener los restaurantes: $error");
+    });
+    return restaurantes;
+  }
 }

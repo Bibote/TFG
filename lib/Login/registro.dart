@@ -171,8 +171,11 @@ class _RegistroWidgetState extends State<RegistroWidget>{
             password: contra1Controller.text.trim(),
           );
           FirebaseFirestore db = FirebaseFirestore.instance;
+          String nombre;
+          nombre = FirebaseAuth.instance.currentUser?.email!.split('@')[0] ?? "";
           await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).set({
             'email': emailController.text.trim(),
+            'nombre': nombre,
           });
           Navigator.push(context, MaterialPageRoute(builder: (context) => const Menu()),);
         } on FirebaseAuthException catch(e) {

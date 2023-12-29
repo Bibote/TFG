@@ -211,11 +211,16 @@ class _LoginWidgetState extends State<LoginWidget> {
     try {
       await FirebaseAuth.instance.signInWithCredential(credential);
       var usersRef = db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid);
+      String nombre;
+      nombre = FirebaseAuth.instance.currentUser?.email!.split('@')[0] ?? "";
       await usersRef.get()
           .then((docSnapshot) => {
         if (!docSnapshot.exists) {
+          //Como nombre se pondra lo que hay antes del @
+
           usersRef.set({
             'email': FirebaseAuth.instance.currentUser?.email,
+            'nombre': nombre,
           })
         }
       });

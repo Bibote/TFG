@@ -2,7 +2,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:tfg/Ocio/Grupos/grupos_BL.dart';
@@ -249,10 +252,7 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                               },
                             );
                           }
-
-
                         }
-
                         Navigator.pop(context);
                       }
                     },
@@ -449,6 +449,17 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
             Spacer(),
             GestureDetector(
               onTap: () {
+                showRestaurantes(context, widget.id);
+              },
+              child: const SizedBox(
+                width: 30,
+                height: 30,
+                child: Icon(Icons.fastfood, color: Colors.white),
+              ),
+            ),
+            SizedBox(width: 10),
+            GestureDetector(
+              onTap: () {
                 verPersonas(context, widget.id, widget.esAdmin);
               },
               child: const SizedBox(
@@ -468,6 +479,7 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
               ),
             ),
             if(widget.esAdmin)...[
+              SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   widget.editPadre(widget.nombre, widget.color, widget.id);
@@ -478,7 +490,6 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
                   child: Icon(Icons.edit, color: Colors.white),
                 ),
               ),
-              SizedBox(width: 10),
               GestureDetector(
                 onTap: () async {
                   final result = await showDialog<bool>(
@@ -522,6 +533,127 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
       )
     );
   }
+
+  Future<void> showRestaurantes(BuildContext context, String idGrupo) async {
+    List<PlaceDetails> restaurantes = await gruposBL().getRestaurantes(idGrupo);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Restaurantes"),
+          content: SizedBox(
+            width: 200,
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: ListView(
+              children: restaurantes.map((restaurante) {
+                return Column(
+                  children: [
+                    ListTile(
+                      title: Text(restaurante.name ?? ""),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              restaurante.priceLevel != null ? getPriceLevel(restaurante.priceLevel!) : 'Sin datos',
+                          ),
+                          RatingBar.builder(
+                            initialRating: restaurante.rating!.toDouble(), // Aquí debes poner la valoración que quieras mostrar
+                            minRating: 0,
+                            direction: Axis.horizontal,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            itemBuilder: (context, _) => const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                            ),
+                            onRatingUpdate: (rating) {},
+                            itemSize: 17,
+                            ignoreGestures: true, // Esto hace que la barra de valoración sea solo de lectura
+                          ),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.map),
+                        onPressed: () {
+                          verMapa(context, restaurante);
+                        },
+                      ),
+                    ),
+                    const Divider(),
+                  ],
+                );
+
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String getPriceLevel(PriceLevel priceLevel) {
+    switch (priceLevel) {
+      case PriceLevel.free:
+        return 'Gratis';
+      case PriceLevel.inexpensive:
+        return '€';
+      case PriceLevel.moderate:
+        return '€€';
+      case PriceLevel.expensive:
+        return '€€€';
+      case PriceLevel.veryExpensive:
+        return '€€€€';
+      default:
+        return '';
+    }
+  }
+
+  void verMapa(BuildContext context, PlaceDetails restaurante) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: Container(
+            width: double.maxFinite,
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: GoogleMap(
+              mapType: MapType.hybrid,
+              initialCameraPosition: CameraPosition(
+                target: LatLng(
+                  restaurante.geometry!.location.lat,
+                  restaurante.geometry!.location.lng,
+                ),
+                zoom: 15,
+              ),
+              markers: Set.from([
+                Marker(
+                  markerId: MarkerId("restaurante"),
+                  position: LatLng(
+                    restaurante.geometry!.location.lat,
+                    restaurante.geometry!.location.lng,
+                  ),
+                  infoWindow: InfoWindow(
+                    title: restaurante.name,
+                    snippet: restaurante.vicinity,
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
 
   void showQR(BuildContext context, String groupId, String secret) {
     // Formatea la información del grupo y el secreto como una cadena de texto

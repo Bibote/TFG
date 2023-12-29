@@ -17,7 +17,7 @@ class _pantallaRestaurantesState extends State<pantallaRestaurantes> {
 
   void conseguirRestaurantes() async {
       try {
-        final result = await restaurantesBL().searchPlacesTest("restaurante");
+        final result = await restaurantesBL().searchPlaces("restaurante");
         if(result.isEmpty) throw Exception("No se han encontrado restaurantes");
         setState(() {
           _placesList = result;
@@ -53,10 +53,7 @@ class _pantallaRestaurantesState extends State<pantallaRestaurantes> {
                     child: Column(
                       children: [
                         const SizedBox(height: 30),
-                        Placeholder(
-                          fallbackHeight: 200,
-                          fallbackWidth: 200,),
-                        //Image.network("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference="+e.photos[0].photoReference.toString()+"&key="+dotenv.env['GOOGLE_API']!),
+                        Image.network("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference="+e.photos[0].photoReference.toString()+"&key="+dotenv.env['GOOGLE_API']!),
                         const SizedBox(height: 20),
                         Row(
                           children: [
@@ -71,10 +68,7 @@ class _pantallaRestaurantesState extends State<pantallaRestaurantes> {
                               ),
                             ),
                             const Spacer(),
-                            Placeholder(
-                              fallbackHeight: 50,
-                              fallbackWidth: 50,)
-                            //if(e.icon != null) Image.network(e.icon!),
+                            if(e.icon != null) Image.network(e.icon!),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -82,7 +76,7 @@ class _pantallaRestaurantesState extends State<pantallaRestaurantes> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Text(
-                                e.priceLevel != null ? getPriceLevel(e.priceLevel!) : 'Precio no disponible',
+                                e.priceLevel != null ? getPriceLevel(e.priceLevel!) : 'Sin datos',
                                 style: estilo
                             ),
                             RatingBar.builder(

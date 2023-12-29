@@ -16,6 +16,7 @@ List<Appointment> _eventos = [];
 class EntregasPage extends StatefulWidget {
   const EntregasPage({Key? key}) : super(key: key);
 
+  @override
   _EntregasPageState createState() => _EntregasPageState();
 }
 
@@ -148,54 +149,358 @@ class _EntregasPageState extends State<EntregasPage> {
   }
 
   void calendarTap(CalendarTapDetails details) {
-
     if (details.targetElement == CalendarElement.appointment) {
       final Appointment evento = details.appointments?[0];
-      showDialog(
-        context: context, // Asegúrate de tener el contexto disponible aquí
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Confirmar eliminación'),
-            content: Text('¿Estás seguro de que quieres borrar este evento?'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('Cancelar'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              ElevatedButton(
-                child: const Text('Eliminar evento'),
-                onPressed: () async {
+      if(evento.notes == "examen") {
+        print("examen");
+        crearPlanEstudio(context, evento);
+      } else if(evento.notes == "entrega") {
+        print("entrega");
+        borrarEvento(context, evento);
+      } else if(evento.notes == "evento") {
+        print("evento");
+        borrarEvento(context, evento);
+      }
 
-                  if(await EntregasBL().eliminarEvento(evento.id )) {
-                    _dataSource?.appointments.remove(evento);
-                    _dataSource?.notifyListeners(CalendarDataSourceAction.remove,
-                    <Appointment>[evento]);
-                    setState(() {
-                      if(evento.notes == "examen") {
-                        _examenes.remove(evento);
-                      } else if(evento.notes == "entrega") {
-                        _entregas.remove(evento);
-                      } else if(evento.notes == "evento") {
-                        _eventos.remove(evento);
-                      }
-                    });
-                  }
-
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
     }
     else if (details.targetElement == CalendarElement.calendarCell) {
       print("calendarCell");
       crearSesion(context, details.date!);
     }
   }
+
+  void borrarEvento(BuildContext context, Appointment evento) {
+    showDialog(
+      context: context, // Asegúrate de tener el contexto disponible aquí
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar eliminación'),
+          content: Text('¿Estás seguro de que quieres borrar este evento?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Eliminar evento'),
+              onPressed: () async {
+                if(await EntregasBL().eliminarEvento(evento.id )) {
+                  _dataSource?.appointments.remove(evento);
+                  _dataSource?.notifyListeners(CalendarDataSourceAction.remove,
+                      <Appointment>[evento]);
+                  setState(() {
+                    if(evento.notes == "examen") {
+                      _examenes.remove(evento);
+                    } else if(evento.notes == "entrega") {
+                      _entregas.remove(evento);
+                    } else if(evento.notes == "evento") {
+                      _eventos.remove(evento);
+                    }
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  void crearPlanEstudio(BuildContext context, Appointment examen){
+    final List<bool> tipo = <bool>[true, false];
+    final List<Widget> temas = [];
+    final List<TextEditingController> temaControllers = [];
+    final List<TextEditingController> diasControllers = [];
+    TextEditingController diasGeneral= TextEditingController();
+    int idTema = 0;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Center(child: Text('Crear plan de estudio')),
+              content: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                width: MediaQuery.of(context).size.width * 0.9,
+                child: ListView(
+                  children: <Widget>[
+                    //Switch para elegir si es por temas o en general
+                    const Text("Tipo de plan de estudio:"),
+                    Center(
+                      child: ToggleButtons(
+                        onPressed: (int index) {
+                          setState(() {
+                            // The button that is tapped is set to true, and the others to false.
+                            for (int i = 0; i < tipo.length; i++) {
+                              tipo[i] = i == index;
+                            }
+                          });
+                        },
+                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        constraints: const BoxConstraints(minWidth: 70,minHeight: 30),
+                        isSelected: tipo,
+                        children: const <Widget>[
+                          Text("Por temas"),
+                          Text("General"),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Center(
+                        child: tipo[0] ? Column(
+                          children: [
+                            ...temas,
+                            ElevatedButton(
+                              child: const Text('Añadir tema'),
+                              onPressed: () {
+                                int currentId = idTema;
+                                final temaController = TextEditingController();
+                                final diasController = TextEditingController();
+                                temaControllers.add(temaController);
+                                diasControllers.add(diasController);
+                                setState(() {
+                                  temas.add(
+                                      Row(
+                                        key: Key('$currentId'),
+                                        children: [
+                                          Expanded(
+                                            child: TextField(
+                                              controller: temaController,
+                                              decoration: const InputDecoration(
+                                                hintText: 'Nombre del tema',
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: diasController,
+                                              decoration: const InputDecoration(
+                                                hintText: 'Días por tema',
+                                              ),
+                                              keyboardType: TextInputType.number,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          InkWell(
+                                            onTap: () {
+                                              setState(() {
+                                                temas.removeWhere((widget) => widget.key == Key('$currentId'));
+                                                temaControllers.removeAt(currentId);
+                                                diasControllers.removeAt(currentId);
+                                              });
+                                            },
+                                            child: const Icon(Icons.delete),
+                                          ),
+                                        ],
+                                      )
+                                  );
+                                  idTema++;
+                                });
+                              },
+                            ),
+                          ],
+                        ) : Column(
+                          children: [
+                            const Text("Días de estudio:"),
+                            TextField(
+                              controller: diasGeneral,
+                              decoration: const InputDecoration(
+                                hintText: 'Introduza los días que quiere dedicar al estudio',
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        )
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                ElevatedButton(
+                  child: const Text('Cerrar'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                ElevatedButton(
+                    child: const Text('Crear'),
+                    onPressed: () async {
+
+                      String idAsignatura ="";
+                      String idExamen ="";
+                      if(examen.id is Map) {
+                        idAsignatura = (examen.id as Map)?['asignatura_id'];
+                        idExamen = (examen.id as Map)?['evento_id'];
+                      }
+
+                      bool existe = _examenes.any((app) {
+                        if (app.id is Map<String, dynamic>) {
+                          var idMap = app.id as Map<String, dynamic>;
+                          return idMap['sesion_id'] == idExamen && app.notes == "estudio";
+                        }
+                        return false;
+                      });
+
+
+                      if (existe) {
+                        print("Existe");
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Confirmación'),
+                              content: Text('Ya existe una sesión de estudio para este examen. ¿Quieres borrar la anterior?'),
+                              actions: <Widget>[
+                                ElevatedButton(
+                                  child: Text('Cancelar'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                                ElevatedButton(
+                                  child: Text('Borrar'),
+                                  onPressed: () {
+                                    List<Appointment> removedAppointments = [];
+
+                                    _examenes.removeWhere((app) {
+                                      if (app.id is Map<String, dynamic>) {
+                                        var idMap = app.id as Map<String, dynamic>;
+                                        if (idMap['sesion_id'] == idExamen && app.notes == "estudio") {
+                                          removedAppointments.add(app);
+                                          return true;
+                                        }
+                                      }
+                                      return false;
+                                    });
+
+                                    _dataSource?.appointments.removeWhere((app) {
+                                      if (app.id is Map<String, dynamic>) {
+                                        var idMap = app.id as Map<String, dynamic>;
+                                        return idMap['sesion_id'] == idExamen && app.notes == "estudio";
+                                      }
+                                      return false;
+                                    });
+
+                                    _dataSource?.notifyListeners(CalendarDataSourceAction.remove, removedAppointments);
+
+                                    guardarPlan(true, examen, temaControllers, diasControllers, diasGeneral);
+                                    Navigator.of(context).pop();
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+
+                              ],
+                            );
+                          },
+                        );
+
+                      } else {
+                        print("No existe");
+                        guardarPlan(true, examen, temaControllers, diasControllers, diasGeneral);
+                        Navigator.of(context).pop();
+                      }
+
+
+                    }
+                ),
+                ElevatedButton(
+                    child: const Text('Borrar examen'),
+                    onPressed: () {
+                      borrarEvento(context, examen);
+                    }
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  void guardarPlan(bool temas, Appointment examen, List<TextEditingController> temaControllers, List<TextEditingController> diasControllers, TextEditingController diasGeneral) async {
+    if(temas) {
+      if(temaControllers.isEmpty) {
+        showError("Error", 'Debe haber al menos un tema');
+      }
+      for (int i = 0; i < temaControllers.length; i++) {
+        if(temaControllers[i].text == "" || diasControllers[i].text == "") {
+          //Pop up de error
+          showError("Error", 'No puede haber campos vacíos');
+        }
+      }
+    } else {
+      if(diasGeneral.text == "") {
+        showError("Error", 'No puede haber campos vacíos');
+      }
+    }
+    String idAsignatura ="";
+    String idExamen ="";
+    if(examen.id is Map) {
+      idAsignatura = (examen.id as Map)?['asignatura_id'];
+      idExamen = (examen.id as Map)?['evento_id'];
+    }
+    //Ahora crear plan de estudio
+    if (temas) {
+      List plan = await EntregasBL().crearPlanEstudioTemas(examen, temaControllers, diasControllers);
+      if (plan.isNotEmpty) {
+        //Se añade al calendario empezando por el final y calculando las fechas
+        for(int i = plan.length-1; i>=0; i--){
+          final Appointment app = Appointment(
+            id: {
+              'asignatura_id': idAsignatura,
+              'sesion_id': idExamen,
+            },
+            startTime: plan[i]['dia_ini'],
+            endTime: plan[i]['dia_fin'],
+            isAllDay: true,
+            color: colorMap[_asignaturasBD.firstWhere((asignatura) => asignatura['id'] == idAsignatura)['color']]!,
+            subject: plan[i]['tema'],
+            notes: "estudio",
+          );
+
+          //Ahora se añade al calendario
+          _examenes.add(app);
+          _dataSource!.appointments.add(app);
+          _dataSource!.notifyListeners(CalendarDataSourceAction.add, <Appointment>[app]);
+
+        }
+
+
+      } else {
+        showError("Error", 'Error al crear el plan de estudio');
+      }
+    } else {
+      print('Días: ${diasGeneral.text}');
+    }
+  }
+
+  void showError(String titulo, String cuerpo) {
+    showDialog(context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(titulo),
+            content: Text(cuerpo),
+            actions: <Widget>[
+              ElevatedButton(
+                child: const Text('Cerrar'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        }
+    );
+  }
+
+
+
 
   void crearSesion(BuildContext context, DateTime selectedDate) {
     final List<bool> tipo = <bool>[true, false, false];
@@ -209,7 +514,7 @@ class _EntregasPageState extends State<EntregasPage> {
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
               title: const Center(child: Text('Crear evento')),
-              content: Container(
+              content: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.4,
                 width: MediaQuery.of(context).size.width * 0.9,
                 child: ListView(
@@ -234,7 +539,7 @@ class _EntregasPageState extends State<EntregasPage> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     const Text("Asignatura:"),
                     DropdownButton<String>(
                       hint: const Text('Selecciona una asignatura'),
@@ -264,7 +569,7 @@ class _EntregasPageState extends State<EntregasPage> {
                         });
                       },
                     ),
-                    Text("Nombre"),
+                    const Text("Nombre"),
                     TextField(
                       controller: _nombreController,
                       decoration: const InputDecoration(
@@ -363,7 +668,6 @@ class _EntregasPageState extends State<EntregasPage> {
                       }else if(tipo.indexOf(true) == 2 ){
                         _eventos.add(app);
                       }
-
                       _dataSource!.appointments.add(app);
                       _dataSource!.notifyListeners(CalendarDataSourceAction.add, <Appointment>[app]);
                       Navigator.of(context).pop();
@@ -376,9 +680,7 @@ class _EntregasPageState extends State<EntregasPage> {
       },
     );
   }
-
 }
-
 
 class _EntregasDataSource extends CalendarDataSource {
   _EntregasDataSource(this.source);

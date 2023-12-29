@@ -1,9 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tfg/Inicio/menu.dart';
 import 'package:tfg/Login/login.dart';
 import 'package:tfg/notification_manager/notification_manager.dart';
@@ -72,10 +71,13 @@ class _MyAppState extends State<MyApp> {
       home: App(),
     );
   }
+
   void changeTheme(ThemeMode themeMode) {
-    setState(() {
-      _themeMode = themeMode;
-    });
+
+      setState(() {
+        _themeMode = themeMode;
+      });
+
   }
 
   ThemeMode getTheme() {
