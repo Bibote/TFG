@@ -177,4 +177,35 @@ class EntregasBL {
       return [];
     }
   }
+
+  Future<Map> crearPlanEstudio(Appointment examen, String diasString) async {
+    int? dias = int.tryParse(diasString);
+    String nombre = examen.subject.split(" ")[1];
+    if(dias==null){
+      return {
+        'error': 'Asegurese de que el valor introducido es un número'
+      };
+    }
+    Map planEstudio = {
+      'tema': nombre,
+      'dia_ini': examen.startTime.subtract(Duration(days: dias)),
+      'dia_fin': examen.startTime.subtract(const Duration(days: 1)),
+    };
+    bool resul = await _db.crearPlanEstudioTemas(examen.id, [planEstudio]);
+    if(resul){
+      return planEstudio;
+    } else {
+      return {
+        'error': 'Error al crear el plan de estudio'
+      };
+    }
+  }
+
+  Future<bool> eliminarPlanEstudio(Object? id) async {
+    if (id is Map) {
+      return await _db.eliminarPlanEstudio(id);
+    } else {
+      return Future.value(false);
+    }
+  }
 }

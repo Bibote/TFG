@@ -87,7 +87,6 @@ class EntregaBD {
   Future<bool> crearPlanEstudioTemas(Object? id, List<Map> planEstudio) async {
     String idAsignatura ="";
     String idExamen ="";
-    print("cebolla");
     if(id is Map) {
       idAsignatura = id['asignatura_id'];
       idExamen = id['evento_id'];
@@ -114,6 +113,30 @@ class EntregaBD {
           return false;
         }
     );
+  }
+
+  Future<bool> eliminarPlanEstudio(Map id) async {
+
+    return await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid)
+        .collection('asignaturas').doc(id['asignatura_id'])
+        .collection('eventos').doc(id['evento_id'])
+        .collection('plan_estudio').get().then((value) {
+      WriteBatch batch = db.batch();
+      for (var tema in value.docs) {
+        batch.delete(tema.reference);
+      }
+      return batch.commit().then((value) {
+        print("Plan de estudio eliminado con id: $id");
+        return true;
+      }).catchError((error) {
+        print("Error al eliminar el plan de estudio: $error");
+        return false;
+      });
+    }).catchError((error) {
+      print("Error al eliminar el plan de estudio: $error");
+      return false;
+    });
+
   }
 
 }

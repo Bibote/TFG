@@ -39,10 +39,7 @@ class _LoginWidgetState extends State<LoginWidget> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const FlutterLogo(
-                  size: 200,
-                ),
-                const SizedBox(height: 40),
+                const Image(image: AssetImage('assets/icon_no_bg.png'), height: 350, width: 350),
                 TextField(
                   controller: emailController,
                   textInputAction: TextInputAction.next,

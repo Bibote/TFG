@@ -21,7 +21,25 @@ void main() async {
   tz.initializeTimeZones();
   NotificationManager().initNotification();
   await dotenv.load(fileName: ".env");
-  runApp(const MyApp());
+  ThemeMode modoCarga = ThemeMode.system;
+  await SharedPreferences.getInstance().then((prefs) {
+    if(prefs.getString('theme') == null) {
+      prefs.setString('theme', 'system');
+    }else {
+      switch(prefs.getString('theme')) {
+        case 'system':
+          modoCarga = ThemeMode.system;
+          break;
+        case 'light':
+          modoCarga = ThemeMode.light;
+          break;
+        case 'dark':
+          modoCarga = ThemeMode.dark;
+          break;
+      }
+    }
+  });
+  runApp(MyApp(modo: modoCarga));
 
 
 }
@@ -29,8 +47,8 @@ void main() async {
 final navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatefulWidget {
-
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({Key? key, required this.modo}) : super(key: key);
+  final ThemeMode modo;
 
   @override
   static _MyAppState of(BuildContext context) =>
@@ -40,9 +58,13 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  late ThemeMode _themeMode;
   // This widget is the root of your application.
-
+  @override
+  void initState() {
+    _themeMode = widget.modo;
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -72,12 +94,11 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void changeTheme(ThemeMode themeMode) {
 
+  void changeTheme(ThemeMode themeMode) {
       setState(() {
         _themeMode = themeMode;
       });
-
   }
 
   ThemeMode getTheme() {

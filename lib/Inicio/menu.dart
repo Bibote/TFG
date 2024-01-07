@@ -235,15 +235,19 @@ class _MenuState extends State<Menu> {
                      ToggleButtons(
                        onPressed: (int index) async {
                          ThemeMode themeMode;
+                         SharedPreferences prefs= await SharedPreferences.getInstance();
                           for (int i = 0; i < _selectedLuz.length; i++) {
                             _selectedLuz[i] = i == index;
                           }
                          if(_selectedLuz[0]){
                            themeMode = ThemeMode.light;
+                           prefs.setString('theme', 'light');
                          }else if(_selectedLuz[1]){
                             themeMode = ThemeMode.dark;
+                            prefs.setString('theme', 'dark');
                          } else{
                             themeMode = ThemeMode.system;
+                            prefs.setString('theme', 'system');
                          }
                          setState(() {
                            // The button that is tapped is set to true, and the others to false.

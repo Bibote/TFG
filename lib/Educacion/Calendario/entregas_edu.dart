@@ -42,6 +42,7 @@ class _EntregasPageState extends State<EntregasPage> {
     setState(() {
       _entregas = sesiones['entregas'];
       _examenes = sesiones['examenes'];
+      print(_examenes);
       _eventos = sesiones['eventos'];
     });
   }
@@ -152,13 +153,8 @@ class _EntregasPageState extends State<EntregasPage> {
     if (details.targetElement == CalendarElement.appointment) {
       final Appointment evento = details.appointments?[0];
       if(evento.notes == "examen") {
-        print("examen");
         crearPlanEstudio(context, evento);
-      } else if(evento.notes == "entrega") {
-        print("entrega");
-        borrarEvento(context, evento);
-      } else if(evento.notes == "evento") {
-        print("evento");
+      } else{
         borrarEvento(context, evento);
       }
 
@@ -186,19 +182,31 @@ class _EntregasPageState extends State<EntregasPage> {
             ElevatedButton(
               child: const Text('Eliminar evento'),
               onPressed: () async {
-                if(await EntregasBL().eliminarEvento(evento.id )) {
-                  _dataSource?.appointments.remove(evento);
-                  _dataSource?.notifyListeners(CalendarDataSourceAction.remove,
-                      <Appointment>[evento]);
-                  setState(() {
-                    if(evento.notes == "examen") {
-                      _examenes.remove(evento);
-                    } else if(evento.notes == "entrega") {
-                      _entregas.remove(evento);
-                    } else if(evento.notes == "evento") {
-                      _eventos.remove(evento);
-                    }
-                  });
+                if(evento.notes == "estudio") {
+                  print("Estudio");
+                  if (await EntregasBL().eliminarPlanEstudio(evento.id)) {
+                    borrarPlanCalendario(evento);
+                  } else {
+                    showError("Error", 'Error al eliminar el plan de estudio');
+                  }
+                }else {
+                  if (await EntregasBL().eliminarEvento(evento.id)) {
+                    _dataSource?.appointments.remove(evento);
+                    _dataSource?.notifyListeners(
+                        CalendarDataSourceAction.remove,
+                        <Appointment>[evento]);
+                    setState(() {
+                      if (evento.notes == "examen") {
+                        _examenes.remove(evento);
+                      } else if (evento.notes == "entrega") {
+                        _entregas.remove(evento);
+                      } else if (evento.notes == "evento") {
+                        _eventos.remove(evento);
+                      }
+                    });
+                  }else {
+                    showError("Error", 'Error al eliminar el evento');
+                  }
                 }
                 Navigator.of(context).pop();
               },
@@ -209,6 +217,37 @@ class _EntregasPageState extends State<EntregasPage> {
     );
   }
 
+  void borrarPlanCalendario(Appointment examen){
+
+    String idExamen ="";
+    if(examen.id is Map) {
+      idExamen = (examen.id as Map)['evento_id'];
+    }
+
+
+    List<Appointment> removedAppointments = [];
+
+    _examenes.removeWhere((app) {
+      if (app.id is Map<String, dynamic>) {
+        var idMap = app.id as Map<String, dynamic>;
+        if (idMap['evento_id'] == idExamen && app.notes == "estudio") {
+          removedAppointments.add(app);
+          return true;
+        }
+      }
+      return false;
+    });
+
+    _dataSource?.appointments.removeWhere((app) {
+      if (app.id is Map<String, dynamic>) {
+        var idMap = app.id as Map<String, dynamic>;
+        return idMap['evento_id'] == idExamen && app.notes == "estudio";
+      }
+      return false;
+    });
+
+    _dataSource?.notifyListeners(CalendarDataSourceAction.remove, removedAppointments);
+  }
 
   void crearPlanEstudio(BuildContext context, Appointment examen){
     final List<bool> tipo = <bool>[true, false];
@@ -335,14 +374,14 @@ class _EntregasPageState extends State<EntregasPage> {
                       String idAsignatura ="";
                       String idExamen ="";
                       if(examen.id is Map) {
-                        idAsignatura = (examen.id as Map)?['asignatura_id'];
-                        idExamen = (examen.id as Map)?['evento_id'];
+                        idAsignatura = (examen.id as Map)['asignatura_id'];
+                        idExamen = (examen.id as Map)['evento_id'];
                       }
 
                       bool existe = _examenes.any((app) {
                         if (app.id is Map<String, dynamic>) {
                           var idMap = app.id as Map<String, dynamic>;
-                          return idMap['sesion_id'] == idExamen && app.notes == "estudio";
+                          return idMap['evento_id'] == idExamen && app.notes == "estudio";
                         }
                         return false;
                       });
@@ -366,33 +405,15 @@ class _EntregasPageState extends State<EntregasPage> {
                                 ),
                                 ElevatedButton(
                                   child: Text('Borrar'),
-                                  onPressed: () {
-                                    List<Appointment> removedAppointments = [];
-
-                                    _examenes.removeWhere((app) {
-                                      if (app.id is Map<String, dynamic>) {
-                                        var idMap = app.id as Map<String, dynamic>;
-                                        if (idMap['sesion_id'] == idExamen && app.notes == "estudio") {
-                                          removedAppointments.add(app);
-                                          return true;
-                                        }
-                                      }
-                                      return false;
-                                    });
-
-                                    _dataSource?.appointments.removeWhere((app) {
-                                      if (app.id is Map<String, dynamic>) {
-                                        var idMap = app.id as Map<String, dynamic>;
-                                        return idMap['sesion_id'] == idExamen && app.notes == "estudio";
-                                      }
-                                      return false;
-                                    });
-
-                                    _dataSource?.notifyListeners(CalendarDataSourceAction.remove, removedAppointments);
-
-                                    guardarPlan(true, examen, temaControllers, diasControllers, diasGeneral);
+                                  onPressed: () async {
+                                    if(await EntregasBL().eliminarPlanEstudio(examen.id)) {
+                                    borrarPlanCalendario(examen);
+                                    guardarPlan(tipo[0], examen, temaControllers, diasControllers, diasGeneral);
                                     Navigator.of(context).pop();
                                     Navigator.of(context).pop();
+                                    } else {
+                                      showError("Error", 'Error al eliminar el plan de estudio');
+                                    }
                                   },
                                 ),
 
@@ -402,8 +423,7 @@ class _EntregasPageState extends State<EntregasPage> {
                         );
 
                       } else {
-                        print("No existe");
-                        guardarPlan(true, examen, temaControllers, diasControllers, diasGeneral);
+                        guardarPlan(tipo[0], examen, temaControllers, diasControllers, diasGeneral);
                         Navigator.of(context).pop();
                       }
 
@@ -442,8 +462,8 @@ class _EntregasPageState extends State<EntregasPage> {
     String idAsignatura ="";
     String idExamen ="";
     if(examen.id is Map) {
-      idAsignatura = (examen.id as Map)?['asignatura_id'];
-      idExamen = (examen.id as Map)?['evento_id'];
+      idAsignatura = (examen.id as Map)['asignatura_id'];
+      idExamen = (examen.id as Map)['evento_id'];
     }
     //Ahora crear plan de estudio
     if (temas) {
@@ -454,13 +474,13 @@ class _EntregasPageState extends State<EntregasPage> {
           final Appointment app = Appointment(
             id: {
               'asignatura_id': idAsignatura,
-              'sesion_id': idExamen,
+              'evento_id': idExamen,
             },
             startTime: plan[i]['dia_ini'],
             endTime: plan[i]['dia_fin'],
             isAllDay: true,
             color: colorMap[_asignaturasBD.firstWhere((asignatura) => asignatura['id'] == idAsignatura)['color']]!,
-            subject: plan[i]['tema'],
+            subject: "Estudiar: "+plan[i]['tema'],
             notes: "estudio",
           );
 
@@ -476,7 +496,28 @@ class _EntregasPageState extends State<EntregasPage> {
         showError("Error", 'Error al crear el plan de estudio');
       }
     } else {
-      print('Días: ${diasGeneral.text}');
+      Map resul = await EntregasBL().crearPlanEstudio(examen, diasGeneral.text);
+      if(resul.containsKey('error')) {
+        showError('Error', resul['error']);
+      } else {
+        final Appointment app = Appointment(
+          id: {
+            'asignatura_id': idAsignatura,
+            'evento_id': idExamen,
+          },
+          startTime: resul['dia_ini'],
+          endTime: resul['dia_fin'],
+          isAllDay: true,
+          color: colorMap[_asignaturasBD.firstWhere((asignatura) => asignatura['id'] == idAsignatura)['color']]!,
+          subject: "Estudiar: "+resul['tema'],
+          notes: "estudio",
+        );
+
+        //Ahora se añade al calendario
+        _examenes.add(app);
+        _dataSource!.appointments.add(app);
+        _dataSource!.notifyListeners(CalendarDataSourceAction.add, <Appointment>[app]);
+      }
     }
   }
 
@@ -653,7 +694,7 @@ class _EntregasPageState extends State<EntregasPage> {
                       final Appointment app = Appointment(
                         id: {
                           'asignatura_id': asignatura['id'],
-                          'sesion_id': id,
+                          'evento_id': id,
                         },
                         startTime: hora.add(Duration(minutes: -1)),
                         endTime: hora,

@@ -5,7 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 class NotificationManager {
   final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
   Future<void> initNotification() async {
-    var initializationSettingsAndroid = AndroidInitializationSettings('flutter_logo');
+    var initializationSettingsAndroid = AndroidInitializationSettings('icon_no_bg');
     var initializationSettingsIOS = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -32,9 +32,9 @@ class NotificationManager {
       'channelName1',
       priority: Priority.high,
       importance: Importance.max,
-      icon: 'flutter_logo',
+      icon: 'icon_no_bg',
       channelShowBadge: true,
-      largeIcon: DrawableResourceAndroidBitmap('flutter_logo'),
+      largeIcon: DrawableResourceAndroidBitmap('icon_no_bg'),
     );
 
     NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails);
@@ -52,9 +52,9 @@ class NotificationManager {
       'channelName2',
       priority: Priority.high,
       importance: Importance.max,
-      icon: 'flutter_logo',
+      icon: 'icon_no_bg',
       channelShowBadge: true,
-      largeIcon: DrawableResourceAndroidBitmap('flutter_logo'),
+      largeIcon: DrawableResourceAndroidBitmap('icon_no_bg'),
     );
 
     NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails);
