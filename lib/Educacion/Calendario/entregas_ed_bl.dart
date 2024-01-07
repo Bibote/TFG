@@ -26,10 +26,12 @@ class EntregasBL {
 
     for (var asignatura in asignaturasBD) {
       asignatura['entregas'].forEach((entrega) {
-        DateTime hora = (entrega['evento_data']['hora'] as Timestamp).toDate();
+        DateTime hora = (entrega['evento_data']['hora_ini'] as Timestamp).toDate();
+        DateTime horafin = (entrega['evento_data']['hora_fin'] as Timestamp).toDate();
         Map id = {
           'asignatura_id':asignatura['asignatura_id'] ,
           'evento_id': entrega['evento_id'],
+          'noti_id': entrega['evento_data']['idNoti'],
         };
         entregasCalendario.add(
             Appointment(
@@ -38,16 +40,19 @@ class EntregasBL {
               subject: "Entrega "+entrega['evento_data']['nombre'],
               color: colorMap[asignatura['asignatura_data']['color']]!,
               notes: "entrega",
-              startTime: hora.add(const Duration(hours: -1)),
-              endTime: hora,
+              startTime: hora,
+              endTime: horafin,
             )
         );
       });
       asignatura['examenes'].forEach((examen) {
-        DateTime hora = (examen['evento_data']['hora'] as Timestamp).toDate();
+        DateTime hora = (examen['evento_data']['hora_ini'] as Timestamp).toDate();
+        DateTime horaFin = (examen['evento_data']['hora_fin'] as Timestamp).toDate();
+
         Map id = {
           'asignatura_id':asignatura['asignatura_id'] ,
           'evento_id': examen['evento_id'],
+          'noti_id': examen['evento_data']['idNoti'],
         };
         examenesCalendario.add(
             Appointment(
@@ -56,8 +61,8 @@ class EntregasBL {
               subject: "Examen "+examen['evento_data']['nombre'],
               color: colorMap[asignatura['asignatura_data']['color']]!,
               notes: "examen",
-              startTime: hora.add(const Duration(hours: -1)),
-              endTime: hora,
+              startTime: hora,
+              endTime: horaFin,
             )
         );
         if(examen['plan_estudio']!=null){
@@ -87,21 +92,23 @@ class EntregasBL {
         }
       });
 
-      asignatura['eventos'].forEach((examen) {
-        DateTime hora = (examen['evento_data']['hora'] as Timestamp).toDate();
+      asignatura['eventos'].forEach((evento) {
+        DateTime hora = (evento['evento_data']['hora_ini'] as Timestamp).toDate();
+        DateTime horaFin = (evento['evento_data']['hora_fin'] as Timestamp).toDate();
         Map id = {
           'asignatura_id':asignatura['asignatura_id'] ,
-          'evento_id': examen['evento_id'],
+          'evento_id': evento['evento_id'],
+          'noti_id': evento['evento_data']['idNoti'],
         };
         eventosCalendario.add(
             Appointment(
               id: id,
               isAllDay: false,
-              subject: "Evento "+examen['evento_data']['nombre'],
+              subject: "Evento "+evento['evento_data']['nombre'],
               color: colorMap[asignatura['asignatura_data']['color']]!,
               notes: "evento",
-              startTime: hora.add(const Duration(hours: -1)),
-              endTime: hora,
+              startTime: hora,
+              endTime: horaFin,
             )
         );
       });
@@ -115,38 +122,50 @@ class EntregasBL {
   }
 
 
-  Future<String> crearEvento(asignatura, DateTime hora, String nombre, int tipo) async {
+  Future<Map> crearEvento(asignatura, DateTime hora,DateTime horafin, String nombre, int tipo) async {
     int idNoti = DateTime.now().millisecondsSinceEpoch% (1 << 31);
-    String id= await _db.crearEvento(asignatura, hora, nombre, tipo, idNoti);
+    String id= await _db.crearEvento(asignatura, hora,horafin, nombre, tipo, idNoti);
 
     if(id!="") {
       programarNotificacion(idNoti, hora, nombre, tipo);
-      return id;
+      return {
+        'asignatura_id': asignatura,
+        'evento_id': id,
+        'noti_id': idNoti,
+      };
     } else {
-      return "";
+      return {
+        'error': 'Error al crear el evento'
+      };
     }
 
   }
 
-  Future<bool> eliminarEvento(Object? id) {
+  Future<bool> eliminarEvento(Object? id) async {
     if (id is Map) {
-      return _db.eliminarEvento(id);
+      if(await _db.eliminarEvento(id)){
+        NotificationManager().deleteNotification(id['noti_id']);
+        return true;
+      } else {
+        return false;
+      }
     } else {
-      return Future.value(false);
+      return false;
     }
   }
 
   void programarNotificacion(int id,DateTime hora, String nombre, int tipo) async {
-    var permiso = await Permission.notification.status;
-    if(permiso.isDenied){
-      await Permission.notification.request();
-    }
+    print("Programando notificacion para la hora: $hora");
+    try {
     if(tipo== 0){
       NotificationManager().scheduleNotification(id,"Examen en 1 hora", "Tienes examen: $nombre", hora.add(const Duration(hours: -1)));
     }else if(tipo== 1){
       NotificationManager().scheduleNotification(id,"Entrega en 1 hora", "Tienes entrega: $nombre",  hora.add(const Duration(hours: -1)));
     }else {
       NotificationManager().scheduleNotification(id,"Evento en 1 hora", "Tienes evento: $nombre",  hora.add(const Duration(hours: -1)));
+    }
+    } catch (e) {
+      print("Error al programar la notificacion: $e");
     }
 
   }

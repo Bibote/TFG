@@ -30,6 +30,7 @@ class _EntregasPageState extends State<EntregasPage> {
 
 
 
+
   @override
   initState() {
     getAsignaturas();
@@ -42,7 +43,6 @@ class _EntregasPageState extends State<EntregasPage> {
     setState(() {
       _entregas = sesiones['entregas'];
       _examenes = sesiones['examenes'];
-      print(_examenes);
       _eventos = sesiones['eventos'];
     });
   }
@@ -95,7 +95,7 @@ class _EntregasPageState extends State<EntregasPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text("Entregas"),
+                  const Text("Entregas"),
                   Checkbox(
                       value: entregasChecked,
                       onChanged: (value) {
@@ -105,7 +105,7 @@ class _EntregasPageState extends State<EntregasPage> {
                         });
                       }
                   ),
-                  Text("Examenes"),
+                  const Text("Examenes"),
                   Checkbox(
                       value: examenesChecked,
                       onChanged: (value) {
@@ -115,7 +115,7 @@ class _EntregasPageState extends State<EntregasPage> {
                         });
                       }
                   ),
-                  Text("Eventos"),
+                  const Text("Eventos"),
                   Checkbox(
                       value: eventosChecked,
                       onChanged: (value) {
@@ -133,7 +133,7 @@ class _EntregasPageState extends State<EntregasPage> {
                   firstDayOfWeek: 1,
                   view: CalendarView.month,
                   onTap: calendarTap,
-                  allowedViews: [
+                  allowedViews: const [
                     CalendarView.week,
                     CalendarView.month,
                   ],
@@ -160,7 +160,6 @@ class _EntregasPageState extends State<EntregasPage> {
 
     }
     else if (details.targetElement == CalendarElement.calendarCell) {
-      print("calendarCell");
       crearSesion(context, details.date!);
     }
   }
@@ -170,11 +169,11 @@ class _EntregasPageState extends State<EntregasPage> {
       context: context, // Asegúrate de tener el contexto disponible aquí
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirmar eliminación'),
-          content: Text('¿Estás seguro de que quieres borrar este evento?'),
+          title: const Text('Confirmar eliminación'),
+          content: const Text('¿Estás seguro de que quieres borrar este evento?'),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancelar'),
+              child: const Text('Cancelar'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -183,7 +182,6 @@ class _EntregasPageState extends State<EntregasPage> {
               child: const Text('Eliminar evento'),
               onPressed: () async {
                 if(evento.notes == "estudio") {
-                  print("Estudio");
                   if (await EntregasBL().eliminarPlanEstudio(evento.id)) {
                     borrarPlanCalendario(evento);
                   } else {
@@ -198,6 +196,7 @@ class _EntregasPageState extends State<EntregasPage> {
                     setState(() {
                       if (evento.notes == "examen") {
                         _examenes.remove(evento);
+                        if (context.mounted)Navigator.of(context).pop();
                       } else if (evento.notes == "entrega") {
                         _entregas.remove(evento);
                       } else if (evento.notes == "evento") {
@@ -208,7 +207,7 @@ class _EntregasPageState extends State<EntregasPage> {
                     showError("Error", 'Error al eliminar el evento');
                   }
                 }
-                Navigator.of(context).pop();
+                if (context.mounted)Navigator.of(context).pop();
               },
             ),
           ],
@@ -370,11 +369,8 @@ class _EntregasPageState extends State<EntregasPage> {
                 ElevatedButton(
                     child: const Text('Crear'),
                     onPressed: () async {
-
-                      String idAsignatura ="";
                       String idExamen ="";
                       if(examen.id is Map) {
-                        idAsignatura = (examen.id as Map)['asignatura_id'];
                         idExamen = (examen.id as Map)['evento_id'];
                       }
 
@@ -388,29 +384,28 @@ class _EntregasPageState extends State<EntregasPage> {
 
 
                       if (existe) {
-                        print("Existe");
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Text('Confirmación'),
-                              content: Text('Ya existe una sesión de estudio para este examen. ¿Quieres borrar la anterior?'),
+                              title: const Text('Confirmación'),
+                              content: const Text('Ya existe una sesión de estudio para este examen. ¿Quieres borrar la anterior?'),
                               actions: <Widget>[
                                 ElevatedButton(
-                                  child: Text('Cancelar'),
+                                  child: const Text('Cancelar'),
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                     Navigator.of(context).pop();
                                   },
                                 ),
                                 ElevatedButton(
-                                  child: Text('Borrar'),
+                                  child: const Text('Borrar'),
                                   onPressed: () async {
                                     if(await EntregasBL().eliminarPlanEstudio(examen.id)) {
                                     borrarPlanCalendario(examen);
                                     guardarPlan(tipo[0], examen, temaControllers, diasControllers, diasGeneral);
-                                    Navigator.of(context).pop();
-                                    Navigator.of(context).pop();
+                                    if (context.mounted) Navigator.of(context).pop();
+                                    if (context.mounted) Navigator.of(context).pop();
                                     } else {
                                       showError("Error", 'Error al eliminar el plan de estudio');
                                     }
@@ -434,6 +429,7 @@ class _EntregasPageState extends State<EntregasPage> {
                     child: const Text('Borrar examen'),
                     onPressed: () {
                       borrarEvento(context, examen);
+
                     }
                 ),
               ],
@@ -546,8 +542,9 @@ class _EntregasPageState extends State<EntregasPage> {
   void crearSesion(BuildContext context, DateTime selectedDate) {
     final List<bool> tipo = <bool>[true, false, false];
     DateTime hora = selectedDate.add(const Duration(hours: 12));
+    DateTime horafin = selectedDate.add(const Duration(hours: 13));
     String? asignaturaSeleccionada = _asignaturasBD[0]['nombre'];
-    TextEditingController _nombreController = TextEditingController();
+    TextEditingController nombreController = TextEditingController();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -612,13 +609,13 @@ class _EntregasPageState extends State<EntregasPage> {
                     ),
                     const Text("Nombre"),
                     TextField(
-                      controller: _nombreController,
+                      controller: nombreController,
                       decoration: const InputDecoration(
                         hintText: 'Nombre',
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text("Hora:"),
+                    const Text("Hora inicio:"),
                     Row(
                       children: <Widget>[
                         Expanded(
@@ -668,6 +665,57 @@ class _EntregasPageState extends State<EntregasPage> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    const Text("Hora fin:"),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(DateFormat('yyyy-MM-dd   hh:mm').format(horafin)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.calendar_today),
+                          onPressed: () async {
+                            final DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: horafin,
+                              firstDate: DateTime(2023),
+                              lastDate: DateTime(2025),
+                            );
+                            if (pickedDate != null) {
+                              setState(() {
+                                horafin = DateTime(
+                                  pickedDate.year,
+                                  pickedDate.month,
+                                  pickedDate.day,
+                                  hora.hour,
+                                  hora.minute,
+                                );
+                              });
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.access_time),
+                          onPressed: () async {
+                            final TimeOfDay? pickedTimefin = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(horafin),
+                            );
+                            if (pickedTimefin != null) {
+                              setState(() {
+                                horafin = DateTime(
+                                  horafin.year,
+                                  horafin.month,
+                                  horafin.day,
+                                  pickedTimefin.hour,
+                                  pickedTimefin.minute,
+                                );
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -683,35 +731,38 @@ class _EntregasPageState extends State<EntregasPage> {
                     onPressed: () async {
                       Map asignatura = _asignaturasBD.firstWhere((asignatura) => asignatura['nombre'] == asignaturaSeleccionada);
                       String tipoA = "";
-                      String id=await EntregasBL().crearEvento(asignatura['id'],hora, _nombreController.text, tipo.indexOf(true));
-                      if(tipo.indexOf(true) == 0) {
-                        tipoA = "examen";
-                      } else if(tipo.indexOf(true) == 1){
-                        tipoA = "entrega";
-                      }else if(tipo.indexOf(true) == 2 ){
-                        tipoA = "evento";
+                      Map resul=await EntregasBL().crearEvento(asignatura['id'],hora,horafin, nombreController.text, tipo.indexOf(true));
+                      if(resul.containsKey('error')) {
+                        showError('Error', resul['error']);
+                        return;
+                      } else {
+                        if (tipo.indexOf(true) == 0) {
+                          tipoA = "examen";
+                        } else if (tipo.indexOf(true) == 1) {
+                          tipoA = "entrega";
+                        } else if (tipo.indexOf(true) == 2) {
+                          tipoA = "evento";
+                        }
+                        final Appointment app = Appointment(
+                          id: resul,
+                          startTime: hora,
+                          endTime: horafin,
+                          color: colorMap[asignatura['color']]!,
+                          subject: nombreController.text,
+                          notes: tipoA,
+                        );
+                        if (tipo.indexOf(true) == 0) {
+                          _examenes.add(app);
+                        } else if (tipo.indexOf(true) == 1) {
+                          _entregas.add(app);
+                        } else if (tipo.indexOf(true) == 2) {
+                          _eventos.add(app);
+                        }
+                        _dataSource!.appointments.add(app);
+                        _dataSource!.notifyListeners(
+                            CalendarDataSourceAction.add, <Appointment>[app]);
+                        if (context.mounted)Navigator.of(context).pop();
                       }
-                      final Appointment app = Appointment(
-                        id: {
-                          'asignatura_id': asignatura['id'],
-                          'evento_id': id,
-                        },
-                        startTime: hora.add(Duration(minutes: -1)),
-                        endTime: hora,
-                        color: colorMap[asignatura['color']]!,
-                        subject: _nombreController.text,
-                        notes: tipoA,
-                      );
-                      if(tipo.indexOf(true) == 0) {
-                        _examenes.add(app);
-                      } else if(tipo.indexOf(true) == 1){
-                        _entregas.add(app);
-                      }else if(tipo.indexOf(true) == 2 ){
-                        _eventos.add(app);
-                      }
-                      _dataSource!.appointments.add(app);
-                      _dataSource!.notifyListeners(CalendarDataSourceAction.add, <Appointment>[app]);
-                      Navigator.of(context).pop();
                     }
                 ),
               ],

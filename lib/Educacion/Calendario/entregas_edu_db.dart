@@ -12,9 +12,10 @@ class EntregaBD {
   EntregaBD._internal();
 
 
-  Future<String> crearEvento(asignatura, DateTime hora, String nombre, int tipo, int idNoti) {
+  Future<String> crearEvento(asignatura, DateTime hora, DateTime horafin, String nombre, int tipo, int idNoti) {
     return db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("asignaturas").doc(asignatura).collection("eventos").add({
-      'hora': Timestamp.fromDate(hora),
+      'hora_ini': Timestamp.fromDate(hora),
+      'hora_fin': Timestamp.fromDate(horafin),
       'nombre': nombre,
       'tipo': tipo+1,
       'idNoti': idNoti,
