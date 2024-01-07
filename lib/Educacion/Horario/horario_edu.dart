@@ -105,12 +105,13 @@ class _pantallaHorarioState extends State<pantallaHorario> {
     if (details.targetElement == CalendarElement.appointment) {
       // Aquí es donde manejas el tap en un evento
       final Appointment appointment = details.appointments?[0];
+      print(appointment.id);
       // Puedes mostrar un diálogo con la información del evento y opciones para eliminarlo
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Información del la clase'),
+            title: const Text('Información de la clase'),
             content: Container(
               height: 100,
               width: MediaQuery.of(context).size.width * 0.9,
@@ -185,14 +186,22 @@ class _pantallaHorarioState extends State<pantallaHorario> {
               ElevatedButton(
                 child: const Text('Eliminar Serie'),
                 onPressed: () async {
-                  if(await horarioBL().eliminarSesion(appointment.id )) {
+                  List<Appointment> appointmentsToRemove = [];
+                  if(await horarioBL().eliminarSesion(appointment.id)) {
+                    for (var cita in _dataSource!.appointments) {
+                      if (appointment.id == cita.id) {
+                        appointmentsToRemove.add(cita);
+                      }
+                    }
+                  }
 
+                  for (var appointment in appointmentsToRemove) {
                     _dataSource?.appointments.remove(appointment);
-                    _dataSource?.notifyListeners(CalendarDataSourceAction.remove,
-                        <Appointment>[appointment]);
+                    _dataSource?.notifyListeners(CalendarDataSourceAction.remove, <Appointment>[appointment]);
                   }
 
                   Navigator.of(context).pop();
+
                 },
               ),
             ],
