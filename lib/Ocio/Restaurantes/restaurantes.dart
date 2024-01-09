@@ -53,7 +53,10 @@ class _pantallaRestaurantesState extends State<pantallaRestaurantes> {
                     child: Column(
                       children: [
                         const SizedBox(height: 30),
-                        Image.network("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference="+e.photos[0].photoReference.toString()+"&key="+dotenv.env['GOOGLE_API']!),
+                        Image.network("https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference="+e.photos[0].photoReference.toString()+"&key="+dotenv.env['GOOGLE_API']!,
+                        width: 400,
+                        height: 400,
+                        ),
                         const SizedBox(height: 20),
                         Row(
                           children: [

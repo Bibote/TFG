@@ -99,18 +99,6 @@ class _MenuState extends State<Menu> {
               icon: const Icon(Icons.alarm, size: 32),
               label: Text("Pomodoro")
           ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(250, 50),
-              ),
-              onPressed: () {
-                cambioPagina(runningPomodoro(descanso: Duration(seconds: 5),estudio: Duration(seconds: 25),descansoLargo: Duration(seconds: 15)), "Pomodoro");
-                Navigator.pop(context);
-              },
-              icon: const Icon(Icons.alarm, size: 32),
-              label: Text("Pomodoro")
-          ),
         ],
       ),
       //Botones de la parte lúdica
