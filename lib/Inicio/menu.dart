@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
+import 'package:tfg/Educacion/pomodoro.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
 import 'package:tfg/Inicio/menu_bl.dart';
 import 'package:tfg/Ocio/Calendario/calendario_oci.dart';
@@ -92,7 +93,19 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(Text("Pomodoro"), "Pomodoro");
+                cambioPagina(pantallaPomodoro(), "Pomodoro");
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.alarm, size: 32),
+              label: Text("Pomodoro")
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(250, 50),
+              ),
+              onPressed: () {
+                cambioPagina(runningPomodoro(descanso: Duration(seconds: 5),estudio: Duration(seconds: 25),descansoLargo: Duration(seconds: 15)), "Pomodoro");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.alarm, size: 32),

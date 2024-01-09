@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:tfg/Educacion/Calendario/entregas_ed_bl.dart';
 import 'package:tfg/Educacion/Horario/horario_edu_bl.dart';
+import 'package:tfg/Ocio/Calendario/calendario_oci_bl.dart';
 import 'package:tfg/notification_manager/notification_manager.dart';
 
 
@@ -16,39 +17,66 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   _ClasesDataSource? _dataSource;
   _ClasesDataSource? _dataSourceEventos;
+  _ClasesDataSource? _dataSourceOcio;
 
   @override
   void initState() {
     getSesiones();
     getEventos();
+    getOcio();
     super.initState();
   }
   @override
   Widget build(BuildContext context) {
 
-    return GridView.count(
-        crossAxisCount: 2,
+    return ListView(
         children: [
+            SizedBox(height: 20,),
+            Text("Horario de clases",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold
+              ),),
+            SfCalendar(
+              view: CalendarView.schedule,
+              firstDayOfWeek: 1,
+              dataSource: _dataSource,
+            ),
+            SizedBox(height: 20,),
+            const Text(
+                "Examenes y entregas",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold
+              ),
+            ),
+            SfCalendar(
+              view: CalendarView.schedule,
+              firstDayOfWeek: 1,
+              dataSource: _dataSourceEventos,
+            ),
+            SizedBox(height: 20,),
+            Text(
+                "Eventos",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold
+              ),
+            ),
           SfCalendar(
             view: CalendarView.schedule,
             firstDayOfWeek: 1,
-            dataSource: _dataSource,
-          ),
-          CustomButton(onPressed: () {
-            print("hola");
-            NotificationManager().simpleNotificacitonShow();
-          }, title: "notiSimple"),
-          SfCalendar(
-            view: CalendarView.schedule,
-            firstDayOfWeek: 1,
-            dataSource: _dataSourceEventos,
+            dataSource: _dataSourceOcio,
           ),
             CustomButton(onPressed: () {
             print("a vwer");
             NotificationManager().scheduleNotification(DateTime.now().millisecondsSinceEpoch% (1 << 31),"titulo", "cuerpo", DateTime.now().add(Duration(seconds: 10)));
             },
             title: "notiSchedule"),
-          Placeholder(),
+          CustomButton(onPressed: () {
+            print("hola");
+            NotificationManager().simpleNotificacitonShow("hola", "hola");
+          }, title: "notiSimple"),
         ],
     );
   }
@@ -68,9 +96,16 @@ class _DashboardState extends State<Dashboard> {
       _dataSourceEventos = _ClasesDataSource([...sesiones['entregas'],...sesiones['examenes'],...sesiones['eventos']]);
     });
   }
+
+  Future<void> getOcio() async {
+    final EventosBL bl = EventosBL();
+    List<Appointment> sesiones = await bl.getEventos();
+    setState(() {
+      _dataSourceOcio = _ClasesDataSource(sesiones);
+    });
+  }
 }
 
-// Definir la fuente de datos del calendario
 class _ClasesDataSource extends CalendarDataSource {
   _ClasesDataSource(List<Appointment> source) {
     appointments = source;

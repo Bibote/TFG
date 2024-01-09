@@ -21,7 +21,7 @@ class NotificationManager {
 
   }
 
-  Future<void> simpleNotificacitonShow() async {
+  Future<void> simpleNotificacitonShow(String titulo, String cuerpo) async {
     var permissions = await Permission.notification.status;
     print(permissions);
     if (permissions.isDenied) {
@@ -38,7 +38,7 @@ class NotificationManager {
     );
 
     NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails);
-    await notificationsPlugin.show(1, 'Título de la Notificación', 'Cuerpo de la Notificación', notificationDetails);
+    await notificationsPlugin.show(1, titulo, cuerpo, notificationDetails);
   }
 
   Future<void> scheduleNotification(int id,String titulo, String cuerpo, DateTime hora) async {
