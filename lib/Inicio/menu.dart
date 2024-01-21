@@ -5,6 +5,7 @@ import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
 import 'package:tfg/Educacion/pomodoro.dart';
 import 'package:tfg/Inicio/Dashboard.dart';
 import 'package:tfg/Inicio/menu_bl.dart';
+import 'package:tfg/Ocio/Actividades/actividades.dart';
 import 'package:tfg/Ocio/Calendario/calendario_oci.dart';
 import 'package:tfg/Ocio/Grupos/grupos.dart';
 import 'package:tfg/Ocio/Restaurantes/restaurantes.dart';
@@ -145,7 +146,7 @@ class _MenuState extends State<Menu> {
                 minimumSize: const Size(250, 50),
               ),
               onPressed: () {
-                cambioPagina(Text("Actividades"), "Actividades");
+                cambioPagina(pantallaActividades(), "Actividades");
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.celebration_rounded, size: 32),

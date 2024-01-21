@@ -20,6 +20,7 @@ void main() async {
   );
   tz.initializeTimeZones();
   NotificationManager().initNotification();
+
   await dotenv.load(fileName: ".env");
   ThemeMode modoCarga = ThemeMode.system;
   await SharedPreferences.getInstance().then((prefs) {

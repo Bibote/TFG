@@ -73,6 +73,7 @@ dependencies:
   numberpicker: ^2.1.2
   slide_countdown: ^1.5.0
   get: ^4.6.6
+  custom_info_window: ^1.0.1
 
 flutter_launcher_icons:
   android: "launcher_icon"

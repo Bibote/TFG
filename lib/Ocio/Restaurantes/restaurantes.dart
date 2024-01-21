@@ -17,7 +17,13 @@ class _pantallaRestaurantesState extends State<pantallaRestaurantes> {
 
   void conseguirRestaurantes() async {
       try {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const Center(child: CircularProgressIndicator())
+        );
         final result = await restaurantesBL().searchPlaces("restaurante");
+        Navigator.pop(context);
         if(result.isEmpty) throw Exception("No se han encontrado restaurantes");
         setState(() {
           _placesList = result;

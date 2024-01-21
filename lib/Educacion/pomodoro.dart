@@ -21,64 +21,78 @@ class _pantallaPomodoroState extends State<pantallaPomodoro> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SizedBox.expand(
-        child: Container(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Tiempo de descanso'),
-              SizedBox(height: 5,),
-              NumberPicker(
-                  minValue: 1,
-                  maxValue: 59,
-                  value: descanso,
-                  axis: Axis.horizontal,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blueGrey),
-                  ),
-                  haptics: true,
-                  onChanged: (value) => setState(() => this.descanso = value),
-              ),
-              SizedBox(height: 16,),
-              Text('Tiempo de trabajo'),
-              SizedBox(height: 5,),
-              NumberPicker(
-                  minValue: 1,
-                  maxValue: 59,
-                  value: trabajo,
-                  axis: Axis.horizontal,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blueGrey),
-                  ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Center(
+              child: Text('Selecciona los tiempos',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 50,
+                    fontWeight: FontWeight.bold),),
+            ),
+            SizedBox(height: 16,),
+            const Text('Tiempo de descanso',
+              style: TextStyle(fontSize: 20,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 5,),
+            NumberPicker(
+                minValue: 1,
+                maxValue: 59,
+                value: descanso,
+                axis: Axis.horizontal,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blueGrey),
+                ),
                 haptics: true,
-                  onChanged: (value) => setState(() => this.trabajo = value),
-              ),
-              SizedBox(height: 16,),
-              Text('Tiempo de descanso largo'),
-              SizedBox(height: 5,),
-              NumberPicker(
-                  minValue: 1,
-                  maxValue: 59,
-                  value: descansoLargo,
-                  axis: Axis.horizontal,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blueGrey),
-                  ),
-                haptics: true,
-                  onChanged: (value) => setState(() => this.descansoLargo = value),
-              ),
-              SizedBox(height: 16,),
-              ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => runningPomodoro(descansoLargo: Duration(minutes: descansoLargo), descanso: Duration(minutes: descanso), estudio: Duration(minutes: trabajo),)));
-                  },
-                  child: Text('Empezar'),
-              ),
-            ],
-          ),
-      ),
+                onChanged: (value) => setState(() => this.descanso = value),
+            ),
+            const SizedBox(height: 16,),
+            const Text('Tiempo de trabajo',
+              style: TextStyle(fontSize: 20,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 5,),
+            NumberPicker(
+                minValue: 1,
+                maxValue: 59,
+                value: trabajo,
+                axis: Axis.horizontal,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blueGrey),
+                ),
+              haptics: true,
+                onChanged: (value) => setState(() => this.trabajo = value),
+            ),
+            const SizedBox(height: 16,),
+            const Text('Tiempo de descanso largo',
+              style: TextStyle(fontSize: 20,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 5,),
+            NumberPicker(
+                minValue: 1,
+                maxValue: 59,
+                value: descansoLargo,
+                axis: Axis.horizontal,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blueGrey),
+                ),
+              haptics: true,
+                onChanged: (value) => setState(() => this.descansoLargo = value),
+            ),
+            const SizedBox(height: 16,),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => runningPomodoro(descansoLargo: Duration(minutes: descansoLargo), descanso: Duration(minutes: descanso), estudio: Duration(minutes: trabajo),)));
+                },
+                child: const Text('Empezar'),
+            ),
+          ],
+        ),
     )
     );
   }
@@ -156,10 +170,10 @@ class _runningPomodoroState extends State<runningPomodoro> {
 
 
   void counter() {
-    timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         if(tiempo.inSeconds > 0) {
-          tiempo = tiempo - Duration(seconds: 1);
+          tiempo = tiempo - const Duration(seconds: 1);
         } else {
           finCount();
         }
@@ -167,58 +181,60 @@ class _runningPomodoroState extends State<runningPomodoro> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SizedBox.expand(
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.black54 : colorFondo,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(modoEstudio ? 'Estudio' : 'Descanso', style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)),
-              SizedBox(height: 16,),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  buildTimeCard(time: tiempo.inMinutes.toString().padLeft(2,'0'), header: 'MINUTES',color: colorFondo, modoOscuro: Theme.of(context).brightness == Brightness.dark),
-                  SizedBox(width: 16,),
-                  buildTimeCard(time: tiempo.inSeconds.remainder(60).toString().padLeft(2,'0'), header: 'SECONDS',color: colorFondo, modoOscuro: Theme.of(context).brightness == Brightness.dark),
-                ],
-              ),
-              SizedBox(height: 16,),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text('Cancelar'),
-                  ),
-                  SizedBox(width: 16,),
-                  ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          if(isRunning) {
-                            timer!.cancel();
-                            isRunning = false;
-                          }else {
-                            counter();
-                            isRunning = true;
-                          }
-                        });
-                      },
-                      child: isRunning ? Text('Pausar') : Text('Reanudar'),
-                  ),
-                ],
-              ),
-
-
-            ],
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: SizedBox.expand(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark ? Colors.black54 : colorFondo,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(modoEstudio ? 'Estudio' : 'Descanso', style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 16,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    buildTimeCard(time: tiempo.inMinutes.toString().padLeft(2,'0'), header: 'MINUTES',color: colorFondo, modoOscuro: Theme.of(context).brightness == Brightness.dark),
+                    const SizedBox(width: 16,),
+                    buildTimeCard(time: tiempo.inSeconds.remainder(60).toString().padLeft(2,'0'), header: 'SECONDS',color: colorFondo, modoOscuro: Theme.of(context).brightness == Brightness.dark),
+                  ],
+                ),
+                const SizedBox(height: 16,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Cancelar'),
+                    ),
+                    const SizedBox(width: 16,),
+                    ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            if(isRunning) {
+                              timer!.cancel();
+                              isRunning = false;
+                            }else {
+                              counter();
+                              isRunning = true;
+                            }
+                          });
+                        },
+                        child: isRunning ? const Text('Pausar') : const Text('Reanudar'),
+                    ),
+                  ],
+                ),
+      
+      
+              ],
+            ),
           ),
         ),
       ),
@@ -228,7 +244,7 @@ class _runningPomodoroState extends State<runningPomodoro> {
 }
 
 Widget buildTimeCard({required String time, required String header, required Color color, required bool modoOscuro}) => Container(
-  padding: EdgeInsets.all(8),
+  padding: const EdgeInsets.all(8),
   decoration: BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(16),
@@ -238,7 +254,7 @@ Widget buildTimeCard({required String time, required String header, required Col
       BoxShadow(
         color: Colors.black.withOpacity(0.1),
         blurRadius: 8,
-        offset: Offset(0, 4),
+        offset: const Offset(0, 4),
       ),
     ],
   ),

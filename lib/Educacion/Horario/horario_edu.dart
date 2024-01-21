@@ -26,11 +26,8 @@ class pantallaHorario extends StatefulWidget {
 class _pantallaHorarioState extends State<pantallaHorario> {
   final CalendarController calendarController = CalendarController();
 
-
-
   @override
   initState() {
-    getSesiones();
     super.initState();
   }
   Future<void> getSesiones()async{
@@ -48,37 +45,44 @@ class _pantallaHorarioState extends State<pantallaHorario> {
       }
       );
     }
+    print(_asignaturasBD);
     List<Appointment> sesiones = await bl.getSesiones();
-    setState(() {
-      print(sesiones);
-      _dataSource = _SesionDataSource(sesiones);
-    });
+    _dataSource = _SesionDataSource(sesiones);
   }
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SfCalendar(
-          controller: calendarController,
-          dataSource: _dataSource,
-          showCurrentTimeIndicator: false,
-          view: CalendarView.workWeek,
-          onTap: calendarTap,
-          appointmentBuilder: AppointmentBuilder,
-          timeSlotViewSettings: const TimeSlotViewSettings(
-            timeIntervalHeight: 60,
-            timeIntervalWidth: 100,
-            timeInterval: Duration(minutes: 60),
-            timeFormat: 'HH:mm',
-            timeTextStyle: TextStyle(
-              fontSize: 12,
-            ),
-          ),
-        ),
+      body: FutureBuilder(
+        future: getSesiones(),
+        builder: (context,snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SfCalendar(
+                controller: calendarController,
+                dataSource: _dataSource,
+                showCurrentTimeIndicator: false,
+                view: CalendarView.workWeek,
+                onTap: calendarTap,
+                appointmentBuilder: AppointmentBuilder,
+                timeSlotViewSettings: const TimeSlotViewSettings(
+                  timeIntervalHeight: 60,
+                  timeIntervalWidth: 100,
+                  timeInterval: Duration(minutes: 60),
+                  timeFormat: 'HH:mm',
+                  timeTextStyle: TextStyle(
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            );
+          }
+        }
       ),
       floatingActionButton: SpeedDial(
             icon: Icons.add,
@@ -98,7 +102,6 @@ class _pantallaHorarioState extends State<pantallaHorario> {
       ),
     );
   }
-
 
 
   void calendarTap(CalendarTapDetails details) {
@@ -140,12 +143,9 @@ class _pantallaHorarioState extends State<pantallaHorario> {
                         const Icon(Icons.school)
                       ],
                       const SizedBox(width: 5),
-
                       Text(appointment.location?? 'No especificado'),
-
                     ],
                   ),
-
                   // Añade aquí más detalles si los necesitas
                 ],
               ),
@@ -219,18 +219,9 @@ class _pantallaHorarioState extends State<pantallaHorario> {
   void crearSesion(BuildContext context, DateTime selectedDate) {
     DateTime startTime = selectedDate;
     DateTime endTime = startTime.add(const Duration(hours: 1));
-    String? asignaturaSeleccionada = _asignaturasBD[0]['nombre'];
+    String? asignaturaSeleccionada;
     bool switchValue = false;
-    bool tieneLab = true;
-    Map asignatura;
-    asignatura = _asignaturasBD.firstWhere((asignatura) => asignatura['nombre'] == asignaturaSeleccionada);
-    if(asignatura['ubicacion_laboratorio'] == null || asignatura['ubicacion_laboratorio'] == ""){
-      tieneLab = false;
-      switchValue = false;
-    } else {
-      tieneLab = true;
-
-    }
+    bool tieneLab = false;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -249,7 +240,9 @@ class _pantallaHorarioState extends State<pantallaHorario> {
                     DropdownButton<String>(
                       hint: const Text('Selecciona una asignatura'),
                       value: asignaturaSeleccionada,
-                      items: _asignaturasBD.map((asignatura) {
+                      items: _asignaturasBD.where((asignatura) {
+                        return asignatura['fecha_fin'].isAfter(selectedDate);
+                      }).map((asignatura) {
                         return DropdownMenuItem<String>(
                           value: asignatura['nombre'],
                           child: Row(
@@ -271,13 +264,12 @@ class _pantallaHorarioState extends State<pantallaHorario> {
                       onChanged: (String? newValue) {
                         setState(() {
                           asignaturaSeleccionada = newValue;
-                          asignatura = _asignaturasBD.firstWhere((asignatura) => asignatura['nombre'] == asignaturaSeleccionada);
+                          var asignatura = _asignaturasBD.firstWhere((asignatura) => asignatura['nombre'] == asignaturaSeleccionada);
                           if(asignatura['ubicacion_laboratorio'] == null || asignatura['ubicacion_laboratorio'] == ""){
                             tieneLab = false;
                             switchValue = false;
                           } else {
                             tieneLab = true;
-
                           }
                         });
                       },
@@ -414,8 +406,16 @@ class _pantallaHorarioState extends State<pantallaHorario> {
                 ElevatedButton(
                     child: const Text('Crear'),
                     onPressed: () async {
+                      if(asignaturaSeleccionada==null) {
+                          showError("Error", "Selecciona una asignatura");
+                        return;
+                      }
                       Map asignatura = _asignaturasBD.firstWhere((asignatura) => asignatura['nombre'] == asignaturaSeleccionada);
-                      String id=await horarioBL().crearSesion(asignatura['id'],startTime,endTime,switchValue);
+                      Map id=(await horarioBL().crearSesion(asignatura['id'],startTime,endTime,switchValue));
+                      if(id.containsKey('error')){
+                        showError("Error", id['error']);
+                        return;
+                      }
                       String lugar = switchValue ? asignatura['ubicacion_laboratorio'] : asignatura['ubicacion_clase'];
                       final Appointment app = Appointment(
                         id: {
@@ -443,7 +443,7 @@ class _pantallaHorarioState extends State<pantallaHorario> {
                       _dataSource!.appointments.add(app);
                       _dataSource!.notifyListeners(
                           CalendarDataSourceAction.add, <Appointment>[app]);
-                      Navigator.of(context).pop();
+                      if(context.mounted) Navigator.of(context).pop();
                     }
                 ),
               ],
@@ -454,6 +454,24 @@ class _pantallaHorarioState extends State<pantallaHorario> {
     );
   }
 
+  void showError(String titulo, String cuerpo) {
+    showDialog(context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(titulo),
+            content: Text(cuerpo),
+            actions: <Widget>[
+              ElevatedButton(
+                child: const Text('Cerrar'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        }
+    );
+  }
 
 
   void verAsignaturas() {
@@ -485,8 +503,6 @@ class _pantallaHorarioState extends State<pantallaHorario> {
 
 class Asignaturas extends StatefulWidget {
   const Asignaturas({Key? key}) : super(key: key);
-
-
   @override
   _AsignaturasState createState() => _AsignaturasState();
 }
@@ -498,7 +514,7 @@ class _AsignaturasState extends State<Asignaturas> {
   Future<List<Widget>> getAsignaturas() async {
     List<Widget> asignaturas = [];
     for (var asignatura in _asignaturasBD) {
-      asignaturas.add(Asignatura(
+      asignaturas.add(TarjetaAsignatura(
         nombre: asignatura['nombre'],
         color: asignatura['color'],
         ubicacion_clase: asignatura['ubicacion_clase'],
@@ -566,10 +582,11 @@ class _AsignaturasState extends State<Asignaturas> {
 
   void menosAsignatura(String id) {
     setState(() {
-      _asignaturas.removeWhere((element) => element is Asignatura && element.id == id);
+      _asignaturas.removeWhere((element) => element is TarjetaAsignatura && element.id == id);
       _asignaturasBD.removeWhere((element) => element['id'] == id);
     });
   }
+
   late final ValueNotifier<DateTime> selectedDate = ValueNotifier<DateTime>(DateTime.now().add(const Duration(days: 7)));
   void nuevaAsignatura([String? preNombre, String? preColor, String? preUbiClase, String? preUbiLab, String? preId, DateTime? preFechaFin]) {
     showDialog(
@@ -580,7 +597,6 @@ class _AsignaturasState extends State<Asignaturas> {
         var ubicacionLabController = TextEditingController();
 
         String color = '';
-        String error = "";
         if (preNombre != null) nombreController.text = preNombre;
         if (preUbiClase != null) ubicacionClaseController.text = preUbiClase;
         if (preUbiLab != null) ubicacionLabController.text = preUbiLab;
@@ -674,15 +690,6 @@ class _AsignaturasState extends State<Asignaturas> {
                       );
                     },
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    error,
-                    style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -697,11 +704,22 @@ class _AsignaturasState extends State<Asignaturas> {
                   var ubicacionClase = ubicacionClaseController.text;
                   var ubicacionLab = ubicacionLabController.text;
                   if(nombre.isEmpty || ubicacionClase.isEmpty) {
-                    setState(() {
-                      error = "Rellena todos los campos obligatorios";
-                    });
+                    showError("Error", "Rellena todos los campos obligatorios");
                   } else {
                     if (preId != null) {
+                      for (var sesion in _dataSource!.appointments) {
+                        if (sesion.id['asignatura_id'] == preId) {
+                          if(sesion.startTime.isAfter(selectedDate.value)){
+                            showError("Error", "La fecha del final de la asignatura no puede ser anterior a la fecha de inicio de ninguna de las sesiones");
+                            return;
+                          }
+                          if(sesion.notes=="lab" && ubicacionLab.isEmpty){
+                            showError("Error", "Esta clase tiene sesiones de laboratorio, por favor espcifica la ubicación");
+                            return;
+                          }
+                        }
+                      }
+
                       horarioBL().actualizarAsignatura(preId, {
                         'nombre': nombre,
                         'color': color,
@@ -728,7 +746,6 @@ class _AsignaturasState extends State<Asignaturas> {
                       _dataSource?.appointments.forEach((element) {
                         if (element.id['asignatura_id'] == preId) {
                           _dataSource?.notifyListeners(CalendarDataSourceAction.remove, <Appointment>[element]);
-
                           element.color = colorMap[color]!;
                           element.subject = nombre;
                           if(element.notes=="lab") {
@@ -738,7 +755,7 @@ class _AsignaturasState extends State<Asignaturas> {
                           }
                           element.recurrenceRule = SfCalendar.generateRRule(
                               RecurrenceProperties(
-                                startDate:  DateTime.now(),
+                                startDate:  element.startTime,
                                 endDate: selectedDate.value,
                                 recurrenceType: RecurrenceType.daily,
                                 interval : 7,
@@ -752,7 +769,7 @@ class _AsignaturasState extends State<Asignaturas> {
                       });
                     }
                     else {
-                      // Aquí es donde agregamos la asignatura a Firestore
+
                       horarioBL().crearAsignatura({
                         'nombre': nombre,
                         'color': color,
@@ -786,6 +803,27 @@ class _AsignaturasState extends State<Asignaturas> {
       },
     );
   }
+
+  void showError(String titulo, String cuerpo) {
+    showDialog(context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(titulo),
+            content: Text(cuerpo),
+            actions: <Widget>[
+              ElevatedButton(
+                child: const Text('Cerrar'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        }
+    );
+  }
+
+
   void showDatePickerDialog(BuildContext context, DateTime? preFechaFin) {
     DateTime fecha =selectedDate.value;
     if (preFechaFin != null) fecha = preFechaFin;
@@ -820,7 +858,7 @@ class _AsignaturasState extends State<Asignaturas> {
   }
   void addAsignaturaLista(String nombre, String color, String ubicacionClase, String ubicacionLab, String id, DateTime fecha_fin){
     setState(() {
-      _asignaturas.add(Asignatura(nombre: nombre, color: color, ubicacion_clase: ubicacionClase, ubicacion_laboratorio: ubicacionLab, id: id,fecha_fin:fecha_fin, parentDeleteFunc: menosAsignatura, parentEditFunc: nuevaAsignatura,));
+      _asignaturas.add(TarjetaAsignatura(nombre: nombre, color: color, ubicacion_clase: ubicacionClase, ubicacion_laboratorio: ubicacionLab, id: id,fecha_fin:fecha_fin, parentDeleteFunc: menosAsignatura, parentEditFunc: nuevaAsignatura,));
     });
   }
 }
@@ -828,8 +866,8 @@ class _AsignaturasState extends State<Asignaturas> {
 
 
 
-class Asignatura extends StatefulWidget {
-  const Asignatura({Key? key, required this.nombre, required this.color, required this.ubicacion_clase, required this.ubicacion_laboratorio, required this.id, required this.parentDeleteFunc, required this.parentEditFunc, required this.fecha_fin}) : super(key: key);
+class TarjetaAsignatura extends StatelessWidget {
+  const TarjetaAsignatura({Key? key, required this.nombre, required this.color, required this.ubicacion_clase, required this.ubicacion_laboratorio, required this.id, required this.parentDeleteFunc, required this.parentEditFunc, required this.fecha_fin}) : super(key: key);
   final String nombre;
   final String color;
   final String ubicacion_clase;
@@ -839,19 +877,12 @@ class Asignatura extends StatefulWidget {
   final Function parentDeleteFunc;
   final Function parentEditFunc;
   @override
-  _AsignaturaState createState() => _AsignaturaState();
-}
-
-class _AsignaturaState extends State<Asignatura> {
-
-
-  @override
   Widget build(BuildContext context) {
     return Container(
       width: 120,
       height: 60,
       decoration: BoxDecoration(
-        color: colorMap[widget.color],
+        color: colorMap[color],
         borderRadius: BorderRadius.circular(15),
       ),
       child: Padding(
@@ -867,7 +898,7 @@ class _AsignaturaState extends State<Asignatura> {
                       Container(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          widget.nombre,
+                          nombre,
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -888,7 +919,7 @@ class _AsignaturaState extends State<Asignatura> {
                               Container(
                                 alignment: Alignment.center,
                                 child: Text(
-                                  widget.ubicacion_clase,
+                                  ubicacion_clase,
                                   style: const TextStyle(color: Colors.white, fontSize: 16),
                                 ),
                               ),
@@ -897,13 +928,13 @@ class _AsignaturaState extends State<Asignatura> {
                           Row(
                             children: [
                               const SizedBox(width: 10),
-                              if (widget.ubicacion_laboratorio.isNotEmpty)...[
+                              if (ubicacion_laboratorio.isNotEmpty)...[
                                 const Icon(Icons.science, color: Colors.white, size: 20,), // Icono para la clase
                                 const SizedBox(width: 5),
                                 Container(
                                   alignment: Alignment.center,
                                   child: Text(
-                                    widget.ubicacion_laboratorio,
+                                    ubicacion_laboratorio,
                                     style: const TextStyle(color: Colors.white, fontSize: 16),
                                   ),
                                 ),
@@ -921,7 +952,7 @@ class _AsignaturaState extends State<Asignatura> {
                           Container(
                             alignment: Alignment.center,
                             child: Text(
-                              widget.fecha_fin.toString().substring(0,10),
+                              fecha_fin.toString().substring(0,10),
                               style: const TextStyle(color: Colors.white, fontSize: 16),
                             ),
                           ),
@@ -933,7 +964,7 @@ class _AsignaturaState extends State<Asignatura> {
                 const Spacer(),
                 GestureDetector(
                   onTap: () {
-                    widget.parentEditFunc(widget.nombre,widget.color,widget.ubicacion_clase,widget.ubicacion_laboratorio,widget.id,widget.fecha_fin);
+                    parentEditFunc(nombre,color,ubicacion_clase,ubicacion_laboratorio,id,fecha_fin);
                   },
                   child: const SizedBox(
                     width: 30,
@@ -964,8 +995,8 @@ class _AsignaturaState extends State<Asignatura> {
                     if (result == null || !result) {
                       return;
                     }
-                    if(await horarioBL().eliminarAsignatura(widget.id)){
-                      widget.parentDeleteFunc(widget.id);
+                    if(await horarioBL().eliminarAsignatura(id)){
+                      parentDeleteFunc(id);
                     } else {
                       print("Error al eliminar la asignatura");
                     }

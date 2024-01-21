@@ -32,16 +32,16 @@ class horarioBL {
     List asignaturasBD = await _db.getSesiones();
     List<Appointment> sesionesCalendario = [];
     for (var asignatura in asignaturasBD) {
-      RecurrenceProperties recursion = RecurrenceProperties(
-                                        startDate:  DateTime.now(),
-                                        endDate: (asignatura['asignatura_data']['fecha_fin'] as Timestamp).toDate(),
-                                        recurrenceType: RecurrenceType.daily,
-                                        interval : 7,
-                                        recurrenceRange: RecurrenceRange.endDate,
-                                      );
       asignatura['sesiones'].forEach((sesion) {
         DateTime horaIni = (sesion['sesion_data']['hora_ini'] as Timestamp).toDate();
         DateTime horaFin = (sesion['sesion_data']['hora_fin'] as Timestamp).toDate();
+        RecurrenceProperties recursion = RecurrenceProperties(
+            startDate:  horaIni,
+            endDate: (asignatura['asignatura_data']['fecha_fin'] as Timestamp).toDate(),
+            recurrenceType: RecurrenceType.daily,
+            interval : 7,
+            recurrenceRange: RecurrenceRange.endDate,
+          );
         String lugar="";
         String tipo="";
         if (sesion['sesion_data']['es_lab']==true){
@@ -103,11 +103,17 @@ class horarioBL {
     return asignaturasBD;
   }
 
-  Future<String> crearSesion(asignatura, DateTime startTime, DateTime endTime, bool switchValue) async {
+  Future<Map> crearSesion(asignatura, DateTime startTime, DateTime endTime, bool switchValue) async {
+    String id = "";
     if(startTime.isAfter(endTime)){
-      return "Fechas incorrectas";
+      return {'error' : 'La hora de inicio no puede ser posterior a la hora de fin'};
     }
-    return await _db.crearSesion(asignatura, startTime, endTime, switchValue);
+    id= await _db.crearSesion(asignatura, startTime, endTime, switchValue);
+    if(id != ""){
+      return {'id': id};
+    } else {
+      return {'error' : 'Ha ocurrido un error en el servidor, pruebe de nuevo más tarde'};
+    }
 
   }
 

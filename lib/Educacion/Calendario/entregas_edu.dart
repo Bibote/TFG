@@ -33,21 +33,9 @@ class _EntregasPageState extends State<EntregasPage> {
 
   @override
   initState() {
-    getAsignaturas();
-    getEventos();
     super.initState();
   }
-  Future<void> getEventos() async {
-    final EntregasBL bl = EntregasBL();
-    Map sesiones = await bl.getEventos();
-    setState(() {
-      _entregas = sesiones['entregas'];
-      _examenes = sesiones['examenes'];
-      _eventos = sesiones['eventos'];
-    });
-  }
-
-  Future<void> getAsignaturas() async {
+  Future<void> iniciar() async {
     final horarioBL blHorario = horarioBL();
     _asignaturasBD = [];
     var asignaturasData = await blHorario.getAsignaturas();
@@ -62,6 +50,14 @@ class _EntregasPageState extends State<EntregasPage> {
       }
       );
     }
+
+    final EntregasBL bl = EntregasBL();
+    Map sesiones = await bl.getEventos();
+
+      _entregas = sesiones['entregas'];
+      _examenes = sesiones['examenes'];
+      _eventos = sesiones['eventos'];
+
   }
 
   void filtrar() {
@@ -127,21 +123,37 @@ class _EntregasPageState extends State<EntregasPage> {
                   ),
                 ],
               ),
-              Expanded(
-                child: SfCalendar(
-                  dataSource: _dataSource,
-                  firstDayOfWeek: 1,
-                  view: CalendarView.month,
-                  onTap: calendarTap,
-                  allowedViews: const [
-                    CalendarView.week,
-                    CalendarView.month,
-                  ],
-                  monthViewSettings: const MonthViewSettings(
-                      appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
-                      showAgenda: true,
-                  ),
-                  ),
+              FutureBuilder(
+                future: iniciar(),
+                builder: (context,snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else if (snapshot.hasError) {
+                    return const Center(
+                      child: Text("Error al cargar los datos"),
+                    );
+                  } else {
+                    return Expanded(
+                      child: SfCalendar(
+                        dataSource: _dataSource,
+                        firstDayOfWeek: 1,
+                        view: CalendarView.month,
+                        onTap: calendarTap,
+                        allowedViews: const [
+                          CalendarView.week,
+                          CalendarView.month,
+                        ],
+                        monthViewSettings: const MonthViewSettings(
+                          appointmentDisplayMode: MonthAppointmentDisplayMode
+                              .appointment,
+                          showAgenda: true,
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -153,6 +165,7 @@ class _EntregasPageState extends State<EntregasPage> {
     if (details.targetElement == CalendarElement.appointment) {
       final Appointment evento = details.appointments?[0];
       if(evento.notes == "examen") {
+        print(evento);
         crearPlanEstudio(context, evento);
       } else{
         borrarEvento(context, evento);
@@ -416,20 +429,16 @@ class _EntregasPageState extends State<EntregasPage> {
                             );
                           },
                         );
-
                       } else {
                         guardarPlan(tipo[0], examen, temaControllers, diasControllers, diasGeneral);
                         Navigator.of(context).pop();
                       }
-
-
                     }
                 ),
                 ElevatedButton(
                     child: const Text('Borrar examen'),
                     onPressed: () {
                       borrarEvento(context, examen);
-
                     }
                 ),
               ],
@@ -479,20 +488,18 @@ class _EntregasPageState extends State<EntregasPage> {
             subject: "Estudiar: "+plan[i]['tema'],
             notes: "estudio",
           );
-
           //Ahora se añade al calendario
           _examenes.add(app);
           _dataSource!.appointments.add(app);
           _dataSource!.notifyListeners(CalendarDataSourceAction.add, <Appointment>[app]);
-
         }
-
-
       } else {
         showError("Error", 'Error al crear el plan de estudio');
       }
     } else {
+      print("holi");
       Map resul = await EntregasBL().crearPlanEstudio(examen, diasGeneral.text);
+      print(resul);
       if(resul.containsKey('error')) {
         showError('Error', resul['error']);
       } else {
@@ -508,8 +515,9 @@ class _EntregasPageState extends State<EntregasPage> {
           subject: "Estudiar: "+resul['tema'],
           notes: "estudio",
         );
-
         //Ahora se añade al calendario
+        print("hpña?");
+        print(app);
         _examenes.add(app);
         _dataSource!.appointments.add(app);
         _dataSource!.notifyListeners(CalendarDataSourceAction.add, <Appointment>[app]);
@@ -543,7 +551,7 @@ class _EntregasPageState extends State<EntregasPage> {
     final List<bool> tipo = <bool>[true, false, false];
     DateTime hora = selectedDate.add(const Duration(hours: 12));
     DateTime horafin = selectedDate.add(const Duration(hours: 13));
-    String? asignaturaSeleccionada = _asignaturasBD[0]['nombre'];
+    String? asignaturaSeleccionada;
     TextEditingController nombreController = TextEditingController();
     showDialog(
       context: context,
@@ -582,7 +590,9 @@ class _EntregasPageState extends State<EntregasPage> {
                     DropdownButton<String>(
                       hint: const Text('Selecciona una asignatura'),
                       value: asignaturaSeleccionada,
-                      items: _asignaturasBD.map((asignatura) {
+                      items: _asignaturasBD.where((asignatura) {
+                        return asignatura['fecha_fin'].isAfter(selectedDate);
+                        }).map((asignatura) {
                         return DropdownMenuItem<String>(
                           value: asignatura['nombre'],
                           child: Row(
@@ -729,8 +739,13 @@ class _EntregasPageState extends State<EntregasPage> {
                 ElevatedButton(
                     child: const Text('Crear'),
                     onPressed: () async {
+                      if(asignaturaSeleccionada == null) {
+                        showError("Error", 'Debe seleccionar una asignatura');
+                        return;
+                      }
                       Map asignatura = _asignaturasBD.firstWhere((asignatura) => asignatura['nombre'] == asignaturaSeleccionada);
                       String tipoA = "";
+                      String nombre ="";
                       Map resul=await EntregasBL().crearEvento(asignatura['id'],hora,horafin, nombreController.text, tipo.indexOf(true));
                       if(resul.containsKey('error')) {
                         showError('Error', resul['error']);
@@ -738,17 +753,20 @@ class _EntregasPageState extends State<EntregasPage> {
                       } else {
                         if (tipo.indexOf(true) == 0) {
                           tipoA = "examen";
+                          nombre= "Ex: ";
                         } else if (tipo.indexOf(true) == 1) {
                           tipoA = "entrega";
+                          nombre= "En: ";
                         } else if (tipo.indexOf(true) == 2) {
                           tipoA = "evento";
+                          nombre= "Ev: ";
                         }
                         final Appointment app = Appointment(
                           id: resul,
                           startTime: hora,
                           endTime: horafin,
                           color: colorMap[asignatura['color']]!,
-                          subject: nombreController.text,
+                          subject: nombre+nombreController.text,
                           notes: tipoA,
                         );
                         if (tipo.indexOf(true) == 0) {
@@ -783,4 +801,3 @@ class _EntregasDataSource extends CalendarDataSource {
   List<dynamic> get appointments => source;
 
 }
-

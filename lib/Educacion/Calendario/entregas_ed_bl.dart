@@ -37,7 +37,7 @@ class EntregasBL {
             Appointment(
               id: id,
               isAllDay: false,
-              subject: "Entrega "+entrega['evento_data']['nombre'],
+              subject: "En: "+entrega['evento_data']['nombre'],
               color: colorMap[asignatura['asignatura_data']['color']]!,
               notes: "entrega",
               startTime: hora,
@@ -58,7 +58,7 @@ class EntregasBL {
             Appointment(
               id: id,
               isAllDay: false,
-              subject: "Examen "+examen['evento_data']['nombre'],
+              subject: "Ex: "+examen['evento_data']['nombre'],
               color: colorMap[asignatura['asignatura_data']['color']]!,
               notes: "examen",
               startTime: hora,
@@ -104,7 +104,7 @@ class EntregasBL {
             Appointment(
               id: id,
               isAllDay: false,
-              subject: "Evento "+evento['evento_data']['nombre'],
+              subject: "Ev: "+evento['evento_data']['nombre'],
               color: colorMap[asignatura['asignatura_data']['color']]!,
               notes: "evento",
               startTime: hora,
@@ -123,6 +123,16 @@ class EntregasBL {
 
 
   Future<Map> crearEvento(asignatura, DateTime hora,DateTime horafin, String nombre, int tipo) async {
+    if(nombre==""){
+      return {
+        'error': 'Introduzca un nombre'
+      };
+    }
+    if(hora.isAfter(horafin)){
+      return {
+        'error': 'La fecha de inicio no puede ser posterior a la fecha final'
+      };
+    }
     int idNoti = DateTime.now().millisecondsSinceEpoch% (1 << 31);
     String id= await _db.crearEvento(asignatura, hora,horafin, nombre, tipo, idNoti);
 
@@ -155,7 +165,6 @@ class EntregasBL {
   }
 
   void programarNotificacion(int id,DateTime hora, String nombre, int tipo) async {
-    print("Programando notificacion para la hora: $hora");
     try {
     if(tipo== 0){
       NotificationManager().scheduleNotification(id,"Examen en 1 hora", "Tienes examen: $nombre", hora.add(const Duration(hours: -1)));
@@ -199,6 +208,7 @@ class EntregasBL {
 
   Future<Map> crearPlanEstudio(Appointment examen, String diasString) async {
     int? dias = int.tryParse(diasString);
+    print("Dias: $dias");
     String nombre = examen.subject.split(" ")[1];
     if(dias==null){
       return {

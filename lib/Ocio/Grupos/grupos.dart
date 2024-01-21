@@ -9,6 +9,7 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:tfg/Ocio/Grupos/grupos_BL.dart';
+import 'package:tfg/main.dart';
 import 'package:tfg/resources.dart';
 
 
@@ -183,9 +184,15 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                       }else {
                         //AQUI SE CREA
                         if(preId==null) {
+                          showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(child: CircularProgressIndicator())
+                          );
                           Map result = await gruposBL().crearGrupo(
                               nombreController.text, contraController.text,
                               color);
+                          Navigator.pop(context);
                           if (result.containsKey('error')) {
                             showDialog(
                               context: context,
@@ -218,8 +225,13 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                             });
                           }
                         }else{
-
+                          showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(child: CircularProgressIndicator())
+                          );
                           bool resul = await gruposBL().modificarGrupo(preId, nombreController.text, contraController.text, color);
+                          Navigator.pop(context);
                           if(resul){
                             setState(() {
                               grupos.removeWhere((element) => element.id == preId);
@@ -282,7 +294,13 @@ class _pantallaGruposState extends State<pantallaGrupos> {
       true,
       ScanMode.QR,
     );
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator())
+    );
     Map resul = await gruposBL().unirseQR(barcodeScanRes);
+    Navigator.pop(context);
     if(resul.containsKey('error')) {
       showDialog(
         context: context,
@@ -389,7 +407,13 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                           error = "Rellena todos los campos obligatorios";
                         });
                       } else {
+                        showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(child: CircularProgressIndicator())
+                        );
                         bool resul=await gruposBL().unirseGrupo(idController.text, contraController.text);
+                        Navigator.pop(context);
                         if (resul) {
                           Navigator.pop(context);
                         } else {
@@ -504,7 +528,13 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
                         ),
                         TextButton(
                           onPressed: () async {
+                            showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => const Center(child: CircularProgressIndicator())
+                            );
                             bool resul = await gruposBL().eliminarGrupo(widget.id);
+                            Navigator.pop(context);
                             if(resul){
                               widget.borradPadre(widget.id);
                             }
@@ -535,7 +565,13 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
   }
 
   Future<void> showRestaurantes(BuildContext context, String idGrupo) async {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator())
+    );
     List<PlaceDetails> restaurantes = await gruposBL().getRestaurantes(idGrupo);
+    Navigator.pop(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {

@@ -4,8 +4,9 @@ import 'package:timezone/timezone.dart' as tz;
 
 class NotificationManager {
   final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
+
   Future<void> initNotification() async {
-    var initializationSettingsAndroid = AndroidInitializationSettings('icon_no_bg');
+    var initializationSettingsAndroid = const AndroidInitializationSettings('icon_no_bg');
     var initializationSettingsIOS = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -18,18 +19,19 @@ class NotificationManager {
         onDidReceiveBackgroundNotificationResponse: (details) {
         }
     );
-
   }
 
+
   Future<void> simpleNotificacitonShow(String titulo, String cuerpo) async {
+    //Gestionar permisos
     var permissions = await Permission.notification.status;
-    print(permissions);
     if (permissions.isDenied) {
       await Permission.notification.request();
     }
+    //Crear la notificacion
     var androidNotificationDetails = const AndroidNotificationDetails(
       '1',
-      'channelName1',
+      'canal',
       priority: Priority.high,
       importance: Importance.max,
       icon: 'icon_no_bg',
@@ -37,19 +39,27 @@ class NotificationManager {
       largeIcon: DrawableResourceAndroidBitmap('icon_no_bg'),
     );
 
-    NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails);
+    var iOSNotificationDetails = const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails, iOS: iOSNotificationDetails);
+
+    //Enviar la notificacion
     await notificationsPlugin.show(1, titulo, cuerpo, notificationDetails);
   }
 
   Future<void> scheduleNotification(int id,String titulo, String cuerpo, DateTime hora) async {
+    //Gestionar permisos
     var permissions = await Permission.notification.status;
-    print(permissions);
     if (permissions.isDenied) {
       await Permission.notification.request();
     }
+    //Gestionar ajustes
     var androidNotificationDetails = const AndroidNotificationDetails(
       '2',
-      'channelName2',
+      'canal2',
       priority: Priority.high,
       importance: Importance.max,
       icon: 'icon_no_bg',
@@ -57,7 +67,14 @@ class NotificationManager {
       largeIcon: DrawableResourceAndroidBitmap('icon_no_bg'),
     );
 
-    NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails);
+    var iOSNotificationDetails = const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails, iOS: iOSNotificationDetails);
+
+    //Enviar la notificación
     await notificationsPlugin.zonedSchedule(
         id,
         titulo,
@@ -68,6 +85,7 @@ class NotificationManager {
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
+
   Future<void> deleteNotification(int id) async {
     await notificationsPlugin.cancel(id);
   }
