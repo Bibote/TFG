@@ -57,6 +57,7 @@ class _EntregasPageState extends State<EntregasPage> {
       _entregas = sesiones['entregas'];
       _examenes = sesiones['examenes'];
       _eventos = sesiones['eventos'];
+    _dataSource = _EntregasDataSource([..._entregas,..._examenes,..._eventos]);
 
   }
 
@@ -84,6 +85,7 @@ class _EntregasPageState extends State<EntregasPage> {
   Widget build(BuildContext context) {
     filtrar();
     return Scaffold(
+      resizeToAvoidBottomInset: false,
         body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(

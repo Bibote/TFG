@@ -26,10 +26,6 @@ class _EventosPageState extends State<EventosPage> {
 
   @override
   initState() {
-    getEventos();
-    setState(() {
-      _dataSource = _EntregasDataSource(_eventosOcio);
-    });
     super.initState();
   }
   Future<void> getEventos() async {
@@ -37,10 +33,9 @@ class _EventosPageState extends State<EventosPage> {
     final EntregasBL blEdu = EntregasBL();
     Map sesiones = await blEdu.getEventos();
     List<Appointment> eventos = await bl.getEventos();
-    setState(() {
       _eventosEducacion = _eventosEducacion= [...sesiones['entregas'],...sesiones['examenes'],...sesiones['eventos']];
       _eventosOcio = eventos;
-    });
+    _dataSource = _EntregasDataSource(_eventosOcio);
   }
 
   void filtrar() {
@@ -80,19 +75,31 @@ class _EventosPageState extends State<EventosPage> {
               ],
             ),
             Expanded(
-              child: SfCalendar(
-                dataSource: _dataSource,
-                firstDayOfWeek: 1,
-                view: CalendarView.month,
-                onTap: calendarTap,
-                allowedViews: [
-                  CalendarView.week,
-                  CalendarView.month,
-                ],
-                monthViewSettings: const MonthViewSettings(
-                  appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
-                  showAgenda: true,
-                ),
+              child: FutureBuilder(
+                future: getEventos(),
+                builder: (context,snapshot) {
+                  if(snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }else if(snapshot.hasError) {
+                    return const Center(child: Text("Error al cargar los eventos"));
+                  }else {
+                    return SfCalendar(
+                      dataSource: _dataSource,
+                      firstDayOfWeek: 1,
+                      view: CalendarView.month,
+                      onTap: calendarTap,
+                      allowedViews: [
+                        CalendarView.week,
+                        CalendarView.month,
+                      ],
+                      monthViewSettings: const MonthViewSettings(
+                        appointmentDisplayMode: MonthAppointmentDisplayMode
+                            .appointment,
+                        showAgenda: true,
+                      ),
+                    );
+                  }
+                }
               ),
             ),
           ],

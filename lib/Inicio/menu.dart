@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tfg/Educacion/Calendario/entregas_edu.dart';
 import 'package:tfg/Educacion/pomodoro.dart';
@@ -26,12 +28,13 @@ class _MenuState extends State<Menu> {
   final List<bool> _selectedLuz = <bool>[false, false, true];
   Widget _pantalla= Dashboard();
   String titulo = "Menu Principal";
-  String _user = "";
+  Map _user = {};
   @override
   void initState() {
-    menuBL().getNombre().then((value) {
+    menuBL().getUser().then((value) {
       setState(() {
         _user =value;
+        print(_user);
       });
     });
     super.initState();
@@ -156,6 +159,7 @@ class _MenuState extends State<Menu> {
       ),
     ];
     return Scaffold(
+        resizeToAvoidBottomInset: false,
       key: _key,
       appBar: AppBar(
         title: Text(titulo),
@@ -179,21 +183,20 @@ class _MenuState extends State<Menu> {
                  padding: const EdgeInsets.all(16.0),
                  child: Row(
                   children: [
-                      const Icon(Icons.account_circle_rounded, size: 50),
-                      const SizedBox(width: 10),
+                    _user.containsKey('imagen')?ClipOval(child: Image.network(_user['imagen'],height: 50, width:50, fit:BoxFit.cover)) : const Icon(Icons.account_circle_rounded, size: 50),
+                    const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                            _user,
+                            _user['nombre'] ?? "Usuario",
                             style: const TextStyle(fontSize: 15),
                             ),
                       ),
                       IconButton(
                         onPressed: ()  {
-                          editarNombre();
+                          editarPerfil();
                         },
                         icon: const Icon(Icons.edit),
                       ),
-
                   ],
                  ),
                ),
@@ -223,77 +226,118 @@ class _MenuState extends State<Menu> {
                 ),
               ),
               const SizedBox(height: 20),
-              Center(
-                child:_menus[_selectedModo.indexOf(true)]
+              SingleChildScrollView(
+                child: Center(
+                  child:_menus[_selectedModo.indexOf(true)]
+                ),
               ),
                const Spacer(
-                   flex: 1
                ),
-              Padding(
-                 padding: const EdgeInsets.all(16.0),
-                 child:  Row(
-                   mainAxisAlignment: MainAxisAlignment.start,
-                   children: [
-                     ToggleButtons(
-                       onPressed: (int index) async {
-                         ThemeMode themeMode;
-                         SharedPreferences prefs= await SharedPreferences.getInstance();
-                          for (int i = 0; i < _selectedLuz.length; i++) {
-                            _selectedLuz[i] = i == index;
-                          }
-                         if(_selectedLuz[0]){
-                           themeMode = ThemeMode.light;
-                           prefs.setString('theme', 'light');
-                         }else if(_selectedLuz[1]){
-                            themeMode = ThemeMode.dark;
-                            prefs.setString('theme', 'dark');
-                         } else{
-                            themeMode = ThemeMode.system;
-                            prefs.setString('theme', 'system');
-                         }
-                         setState(() {
-                           // The button that is tapped is set to true, and the others to false.
-                           MyApp.of(context).changeTheme(themeMode);
-
-                         });
-                       },
-                       constraints: const BoxConstraints(minWidth: 60, minHeight: 30),
-                       borderRadius: const BorderRadius.all(Radius.circular(8)),
-                       isSelected: _selectedLuz,
-                       children: const <Widget>[
-                         Icon(Icons.sunny),
-                         Icon(Icons.nightlight),
-                         Icon((Icons.system_security_update_good))
-                       ],
-                     ),
-                     const Spacer(),
-                     IconButton(
-                         icon: const Icon(Icons.logout_outlined,size: 32),
-                         onPressed: () async {
-                           await FirebaseAuth.instance.signOut();
-                         }
-                     ),
-                   ],
+              SingleChildScrollView(
+                child: Padding(
+                   padding: const EdgeInsets.all(16.0),
+                   child:  Row(
+                     mainAxisAlignment: MainAxisAlignment.start,
+                     children: [
+                       ToggleButtons(
+                         onPressed: (int index) async {
+                           ThemeMode themeMode;
+                           SharedPreferences prefs= await SharedPreferences.getInstance();
+                            for (int i = 0; i < _selectedLuz.length; i++) {
+                              _selectedLuz[i] = i == index;
+                            }
+                           if(_selectedLuz[0]){
+                             themeMode = ThemeMode.light;
+                             prefs.setString('theme', 'light');
+                           }else if(_selectedLuz[1]){
+                              themeMode = ThemeMode.dark;
+                              prefs.setString('theme', 'dark');
+                           } else{
+                              themeMode = ThemeMode.system;
+                              prefs.setString('theme', 'system');
+                           }
+                           setState(() {
+                             // The button that is tapped is set to true, and the others to false.
+                             MyApp.of(context).changeTheme(themeMode);
+                
+                           });
+                         },
+                         constraints: const BoxConstraints(minWidth: 60, minHeight: 30),
+                         borderRadius: const BorderRadius.all(Radius.circular(8)),
+                         isSelected: _selectedLuz,
+                         children: const <Widget>[
+                           Icon(Icons.sunny),
+                           Icon(Icons.nightlight),
+                           Icon((Icons.system_security_update_good))
+                         ],
+                       ),
+                       const Spacer(),
+                       IconButton(
+                           icon: const Icon(Icons.logout_outlined,size: 32),
+                           onPressed: () async {
+                             await FirebaseAuth.instance.signOut();
+                           }
+                       ),
+                     ],
+                   ),
                  ),
-               ),
+              ),
             ],
           ),
         ),
       )
     );
   }
-  void editarNombre() {
+
+
+  void editarPerfil() {
     var nombreController = TextEditingController();
-    nombreController.text = _user;
+    nombreController.text = _user['nombre'];
+    XFile? archivo;
+    File? _image;
     showDialog(context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("Editar nombre"),
-            content: TextField(
-              controller: nombreController,
-              onChanged: (String value) {
-                _user = value;
-              },
+            title: const Text("Editar perfil"),
+            content: Expanded(
+              child: SizedBox.fromSize(
+                  size: const Size(100, 300),
+                  child: StatefulBuilder(
+                      builder: (context,setState) {
+                        return Column(
+                          children: [
+                            _image != null
+                                ? ClipOval(child: Image.file(_image!, height: 100, width: 100, fit: BoxFit.cover))
+                                : _user.containsKey('imagen')
+                                ? ClipOval(child: Image.network(_user['imagen'], height: 100, width: 100, fit: BoxFit.cover))
+                                : Icon(Icons.account_circle_rounded, size: 100),
+              
+                            const SizedBox(height: 20),
+                            Text('Introduzca una nueva imagen'),
+                            IconButton(
+                                onPressed: () async {
+                                  final ImagePicker picker = ImagePicker();
+                                  archivo =
+                                  await picker.pickImage(source: ImageSource.gallery);
+                                  setState(() {
+                                    _image = File(archivo!.path);
+                                  });
+                                },
+                                icon: Icon(Icons.camera_alt)
+                            ),
+                            SizedBox(height: 20),
+                            Text("Nombre de usuario:"),
+                            TextField(
+                              controller: nombreController,
+                              onChanged: (String value) {
+                                _user['nombre'] = value;
+                              },
+                            ),
+                          ],
+                        );
+                      }
+                  )
+              ),
             ),
             actions: [
               TextButton(
@@ -304,13 +348,28 @@ class _MenuState extends State<Menu> {
               ),
               TextButton(
                   onPressed: () async {
-                    bool resul = await menuBL().setNombre(_user);
-                    if(resul){
-                      setState(() {
-                        _user = nombreController.text;
-                      });
+                    if(archivo != null) {
+                      String res = await menuBL().subirImagen(archivo!);
+                      if (res != "") {
+                        setState(() {
+                          _user['imagen'] = res;
+                        });
+                        if (context.mounted) Navigator.of(context).pop();
+                      } else {
+                        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al subir la imagen')));
+                      }
                     }
-                    Navigator.pop(context);
+                    if(nombreController.text != _user['nombre']) {
+                        Map resul = await menuBL().setNombre(_user['nombre']);
+                        if(resul.containsKey('error')){
+                          if(context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resul['error'])));
+                        } else {
+                          setState(() {
+                            _user['nombre'] = nombreController.text;
+                          });
+                      }
+                    }
+                    if(context.mounted)Navigator.pop(context);
                   },
                   child: const Text("Aceptar")
               ),
@@ -320,6 +379,7 @@ class _MenuState extends State<Menu> {
     );
   }
 }
+
 
 
 

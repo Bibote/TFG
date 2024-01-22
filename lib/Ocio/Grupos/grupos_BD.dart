@@ -22,6 +22,7 @@ class gruposBD  {
       'contra': contra,
       'secreto': secreto,
       'admin': FirebaseAuth.instance.currentUser?.uid,
+      'integrantes':[FirebaseAuth.instance.currentUser?.uid]
     }).then((value) {
       print("Grupo creada con id: ${value.id}");
       result['idGrupo'] = value.id;
@@ -32,86 +33,70 @@ class gruposBD  {
       result['error'] = error;
     });
     //Se le añade el grupo al usuario
-    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("grupos").add({
-      'id': idGrupo,
-    }).then((value) {
-      print("Grupo añadido al usuario con id: ${value.id}");
+    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).update({
+      'grupos': FieldValue.arrayUnion([idGrupo]),
     }).catchError((error) {
       print("Error al añadir el grupo al usuario: $error");
       result['error'] = error;
     });
 
-    //Se añade el usuario al grupo
-    await db.collection('grupos').doc(idGrupo).collection("usuarios").add({
-      'id': FirebaseAuth.instance.currentUser?.uid,
-    }).then((value) {
-      print("Usuario añadido al grupo con id: ${value.id}");
-    }).catchError((error) {
-      print("Error al añadir el usuario al grupo: $error");
-      result['error'] = error;
-    });
     return result;
 
   }
 
   Future<List> getGrupos() async {
     List<Map> grupos = [];
-    try {
-      var event = await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("grupos").get();
-      for (var element in event.docs) {
-        await db.collection('grupos').doc(element.data()['id']).get().then((value) async {
+    await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).get().then((value) async {
+      for (var element in value.data()?['grupos']) {
+        await db.collection('grupos').doc(element).get().then((
+            value) async {
           Map grupo = {
-            'grupo_id' : value.id,
-            'grupo_data' : value.data(),
+            'grupo_id': value.id,
+            'grupo_data': value.data(),
           };
           grupos.add(grupo);
         });
       }
-    } catch (e) {
-      print("Error al obtener los grupos: $e");
-    }
-    print(grupos);
+    });
     return grupos;
   }
 
-  Future<bool>unirseGrupo(String id, String contra) async {
-    await db.collection('grupos').doc(id).get().then((value) {
+  Future<Map>unirseGrupo(String id, String contra) async {
+    Map result = {};
+    await db.collection('grupos').doc(id).get().then((value) async {
+      result['idGrupo'] = value.id;
+      result['secreto'] = value.data()?['secreto'];
+      result['color'] = value.data()?['color'];
+      result['nombre'] = value.data()?['nombre'];
+      result['admin'] = value.data()?['admin'];
       if (value.data()?['contra'] == contra) {
         //Comprobar que no esta ya en el grupo
-        db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("grupos").get().then((value) {
-          for (var element in value.docs) {
-            if (element.data()['id'] == id) {
-              print("Ya estas en el grupo");
-              return false;
-            }
-          }
-        });
-        db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("grupos").add({
-          'id': id,
-        }).then((value) {
-          db.collection('grupos').doc(id).collection("usuarios").add({
-            'id': FirebaseAuth.instance.currentUser?.uid,
-          }).then((value) {
-            print("Usuario añadido al grupo con id: ${value.id}");
+        if(value.data()?['integrantes'].contains(FirebaseAuth.instance.currentUser?.uid)){
+          result= {'error': 'Ya estás en el grupo'};
+          return result;
+        }
+        await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).update({
+          'grupos': FieldValue.arrayUnion([id]),
+        }).then((value) async {
+          await db.collection('grupos').doc(id).update({
+            'integrantes': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser?.uid]),
           }).catchError((error) {
             print("Error al añadir el usuario al grupo: $error");
-            return false;
+            result= {'error': 'Ha ocurrido un error, prueba más tarde'};
           });
-          print("Grupo añadido al usuario con id: ${value.id}");
-          return true;
         }).catchError((error) {
           print("Error al añadir el grupo al usuario: $error");
-          return false;
+          result= {'error': 'Ha ocurrido un error, prueba más tarde'};
         });
       } else {
         print("Contraseña incorrecta");
-        return false;
+        result= {'error': 'Id o contraseña incorrectos'};
       }
     }).catchError((error) {
       print("Error al obtener el grupo: $error");
-      return false;
+      result= {'error': 'Id o contraseña incorrectos'};
     });
-    return true;
+    return result;
   }
 
   Future<Map> unirseQR(String id, String secret) async {
@@ -123,28 +108,22 @@ class gruposBD  {
       result['nombre'] = value.data()?['nombre'];
       result['admin'] = value.data()?['admin'];
       if (value.data()?['secreto'] == secret) {
-        //Comprobar que no esta ya en el grupo
-        await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("grupos").get().then((value) {
-          for (var element in value.docs) {
-            if (element.data()['id'] == id) {
-              result['error'] = "Ya estás en el grupo";
-            }
-          }
-        });
-        await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).collection("grupos").add({
-          'id': id,
+        if(value.data()?['integrantes'].contains(FirebaseAuth.instance.currentUser?.uid)){
+          print("Ya estás en el grupo");
+          return false;
+        }
+        await db.collection('usuarios').doc(FirebaseAuth.instance.currentUser?.uid).update({
+          'grupos': FieldValue.arrayUnion([id]),
         }).then((value) async {
-          await db.collection('grupos').doc(id).collection("usuarios").add({
-            'id': FirebaseAuth.instance.currentUser?.uid,
-          }).then((value) {
-            print("Usuario añadido al grupo con id: ${value.id}");
+          await db.collection('grupos').doc(id).update({
+            'integrantes': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser?.uid]),
           }).catchError((error) {
-            result['error'] = "Error al añadir el usuario al grupo";
+            print("Error al añadir el usuario al grupo: $error");
+            return false;
           });
-          print("Grupo añadido al usuario con id: ${value.id}");
-          return id;
         }).catchError((error) {
-          result['error'] = "Error al añadir el grupo al usuario";
+          print("Error al añadir el grupo al usuario: $error");
+          return false;
         });
       } else {
         result['error'] = "QR incorrecto";
@@ -157,26 +136,18 @@ class gruposBD  {
 
   Future<bool> eliminarGrupo(String id) async {
     //primero hay que eliminar el grupo de cada usuario que pertecezca a el
-    await db.collection('grupos').doc(id).collection("usuarios").get().then((value) async {
-      for (var element in value.docs) {
-        await db.collection('usuarios').doc(element.data()['id']).collection("grupos").where("id",isEqualTo: id).get().then((value){
-          for (var element in value.docs) {
-            print("sacando");
-            print(element.id);
-            element.reference.delete();
-          }
+    await db.collection('grupos').doc(id).get().then((value) async {
+      for (var element in value.data()?['integrantes']) {
+        await db.collection('usuarios').doc(element).update({
+          'grupos': FieldValue.arrayRemove([id]),
+        }).catchError((error) {
+          print("Error al eliminar el grupo del usuario: $error");
+          return false;
         });
-
       }
     }).catchError((error) {
-    });
-
-    //hay que eliminar la coleccion de usuarios del grupo
-    await db.collection('grupos').doc(id).collection("usuarios").get().then((value) {
-      for (var element in value.docs) {
-        element.reference.delete();
-      }
-    }).catchError((error) {
+      print("Error al obtener el grupo: $error");
+      return false;
     });
 
     //ahora hay que eliminar el grupo
@@ -191,43 +162,44 @@ class gruposBD  {
   }
 
   Future<List> getPersonas(String idGrupo) async {
-    List<Map> listapersonas = await db.collection('grupos').doc(idGrupo).collection("usuarios").get().then((value) {
-      List<Map> personas = [];
-      for (var element in value.docs) {
-        Map persona = {
-          'usuario': element.id,
-          'usuario_data' : element.data(),
-        };
-        personas.add(persona);
-      }
-      return personas;
-    });
     List<Map> personas = [];
-    for (var element in listapersonas) {
-      await db.collection('usuarios').doc(element["usuario_data"]["id"]).get().then((value) {
-        Map persona = {
-          'persona_idGrupo': element["usuario"],
-          'persona_id' : value.id,
-          'persona_data' : value.data(),
-        };
-        personas.add(persona);
-      });
-    }
+    await db.collection('grupos').doc(idGrupo).get().then((value) async {
+      for (var element in value.data()?['integrantes']) {
+        await db.collection('usuarios').doc(element).get().then((value) {
+          Map persona = {
+            'persona_idGrupo': element,
+            'persona_id' : value.id,
+            'persona_data' : value.data(),
+          };
+          personas.add(persona);
+        });
+      }
+    });
     return personas;
   }
 
   Future<bool> salirGrupo(String idGrupo, String idPersona) async {
-    await db.collection('usuarios').doc(idPersona).collection("grupos").where("id",isEqualTo: idGrupo).get().then((value){
-      for (var element in value.docs) {
-        element.reference.delete();
-      }
+    //Inicializar batch
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+
+    //Guardar las referencias a los documentos
+    DocumentReference userRef = FirebaseFirestore.instance.collection('usuarios').doc(idPersona);
+    DocumentReference groupRef = FirebaseFirestore.instance.collection('grupos').doc(idGrupo);
+
+    //Eliminar el grupo del usuario y el usuario del grupo
+    batch.update(userRef, {
+      'grupos': FieldValue.arrayRemove([idGrupo]),
     });
-    await db.collection('grupos').doc(idGrupo).collection("usuarios").where("id",isEqualTo: idPersona).get().then((value){
-      for (var element in value.docs) {
-        element.reference.delete();
-      }
+
+    batch.update(groupRef, {
+      'integrantes': FieldValue.arrayRemove([idPersona]),
     });
-    return true;
+
+    //Ejecutar batch
+    return batch.commit().then((value) => true).catchError((error) {
+      print("Error al realizar las operaciones en batch: $error");
+      return false;
+    });
   }
 
   Future<bool>modificarGrupo(String preId, String nombre, String contra, String color) async {
@@ -245,10 +217,10 @@ class gruposBD  {
 
   Future<List> getRestaurantes(String idGrupo) async {
     List restaurantes = [];
-    await db.collection('grupos').doc(idGrupo).collection("usuarios").get().then((value) async {
-      for (var element in value.docs) {
+    await db.collection('grupos').doc(idGrupo).get().then((value) async {
+      for (var element in value.data()?['integrantes']) {
         List restaurantePersonal =[];
-        await db.collection('usuarios').doc(element.data()['id']).collection("restaurantes").where('like', isEqualTo: true).get().then((value) {
+        await db.collection('usuarios').doc(element).collection("restaurantes").where('like', isEqualTo: true).get().then((value) {
           for (var element in value.docs) {
             restaurantePersonal.add(element.id);
           }

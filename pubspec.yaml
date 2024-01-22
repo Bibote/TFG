@@ -74,6 +74,8 @@ dependencies:
   slide_countdown: ^1.5.0
   get: ^4.6.6
   custom_info_window: ^1.0.1
+  image_picker: ^1.0.7
+  firebase_storage: ^11.6.0
 
 flutter_launcher_icons:
   android: "launcher_icon"

@@ -25,7 +25,7 @@ class _pantallaPomodoroState extends State<pantallaPomodoro> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Center(
-              child: Text('Selecciona los tiempos',
+              child: Text('P🍅m🍅d🍅r🍅',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 50,
                     fontWeight: FontWeight.bold),),

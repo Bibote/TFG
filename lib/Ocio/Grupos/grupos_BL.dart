@@ -1,5 +1,8 @@
 
 
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'dart:math';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -14,22 +17,36 @@ class gruposBL {
   gruposBL._internal();
 
   Future<Map> crearGrupo(String nombre, String contra, String color) async {
+    if(nombre == '' || contra == '' || color == '') {
+      return {'error': 'Introduzca todos los datos necesarios'};
+    }
+    if(nombre.length > 15) {
+      return {'error': 'El nombre del grupo no puede tener más de 15 caracteres'};
+    }
     final random = Random();
     const availableChars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
     final secreto = List.generate(10, (index) => availableChars[random.nextInt(availableChars.length)]).join();
-    return await gruposBD().crearGrupo(nombre, contra, color,secreto);
+    var bytes = utf8.encode(contra);
+    String hash = sha256.convert(bytes).toString();
+    return await gruposBD().crearGrupo(nombre, hash, color,secreto);
   }
 
   Future<List> getGrupos() async {
     return await gruposBD().getGrupos();
   }
 
-  Future<bool> unirseGrupo(String id, String contra) async {
-    return await gruposBD().unirseGrupo(id, contra);
+  Future<Map> unirseGrupo(String id, String contra) async {
+    var bytes = utf8.encode(contra);
+    String hash = sha256.convert(bytes).toString();
+    return await gruposBD().unirseGrupo(id, hash);
   }
 
   Future<Map> unirseQR(String barcodeScanRes) async {
+
     List<String> values = barcodeScanRes.split(' ');
+    if(values.length != 2) {
+      return {'error': 'QR no válido'};
+    }
 
     String secret = values[0];
     String id = values[1];
@@ -48,8 +65,20 @@ class gruposBL {
     return await gruposBD().salirGrupo(idGrupo, idPersona);
   }
 
-  Future<bool> modificarGrupo(String preId, String nombre, String contra, String color) async {
-    return await gruposBD().modificarGrupo(preId, nombre, contra, color);
+  Future<Map> modificarGrupo(String preId, String nombre, String contra, String color) async {
+    if(nombre == '' || contra == '' || color == '') {
+      return {'error': 'Introduzca todos los datos necesarios'};
+    }
+    if(nombre.length > 15) {
+      return {'error': 'El nombre del grupo no puede tener más de 15 caracteres'};
+    }
+    var bytes = utf8.encode(contra);
+    String hash = sha256.convert(bytes).toString();
+    if (await gruposBD().modificarGrupo(preId, nombre, hash, color))
+      return {'ok': 'Grupo modificado correctamente'};
+    else {
+      return {'error': 'Error al modificar el grupo'};
+    }
   }
 
   Future<List<PlaceDetails>> getRestaurantes(String idGrupo) async {

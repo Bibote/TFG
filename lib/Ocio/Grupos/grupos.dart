@@ -1,6 +1,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -90,12 +91,12 @@ class _pantallaGruposState extends State<pantallaGrupos> {
         if (preNombre != null) nombreController.text = preNombre;
         if (preColor != null) color = preColor;
         return AlertDialog(
-                title: const Text('Añadir/Modificar asignatura'),
+                title: const Text('Crear/Modificar grupo'),
                 content: Container(
                   height: MediaQuery
                       .of(context)
                       .size
-                      .height * 0.45,
+                      .height * 0.30,
                   width: MediaQuery
                       .of(context)
                       .size
@@ -115,8 +116,9 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                         controller: nombreController,
                         decoration: const InputDecoration(hintText: 'Nombre'),
                       ),
+                      const SizedBox(height: 10),
                       const Text(
-                        'Contraseñas:*',
+                        'Contraseña:*',
                         style: TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -192,13 +194,13 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                           Map result = await gruposBL().crearGrupo(
                               nombreController.text, contraController.text,
                               color);
-                          Navigator.pop(context);
+                          if(context.mounted)Navigator.pop(context);
                           if (result.containsKey('error')) {
                             showDialog(
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  title: Text('Error'),
+                                  title: const Text('Error'),
                                   content: Text(result['error']),
                                   actions: <Widget>[
                                     ElevatedButton(
@@ -223,6 +225,7 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                                 editPadre: crearGrupo,
                               ));
                             });
+                            if(context.mounted)Navigator.pop(context);
                           }
                         }else{
                           showDialog(
@@ -230,9 +233,29 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                               barrierDismissible: false,
                               builder: (context) => const Center(child: CircularProgressIndicator())
                           );
-                          bool resul = await gruposBL().modificarGrupo(preId, nombreController.text, contraController.text, color);
-                          Navigator.pop(context);
-                          if(resul){
+                          Map resul = await gruposBL().modificarGrupo(preId, nombreController.text, contraController.text, color);
+                          if(context.mounted)Navigator.pop(context);
+                          print(resul);
+                          if(resul.containsKey('error')) {
+                            print("AQUI");
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Error'),
+                                  content: Text(resul['error']),
+                                  actions: <Widget>[
+                                    ElevatedButton(
+                                      child: Text('Close'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          }else{
                             setState(() {
                               grupos.removeWhere((element) => element.id == preId);
                               grupos.add(tarjetaGrupo(
@@ -245,27 +268,10 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                                 editPadre: crearGrupo,
                               ));
                             });
-                          }else{
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text('Error'),
-                                  content: Text("Error al modificar el grupo"),
-                                  actions: <Widget>[
-                                    ElevatedButton(
-                                      child: Text('Close'),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                            Navigator.pop(context);
                           }
                         }
-                        Navigator.pop(context);
+
                       }
                     },
                     child: const Text('Crear'),
@@ -412,15 +418,44 @@ class _pantallaGruposState extends State<pantallaGrupos> {
                             barrierDismissible: false,
                             builder: (context) => const Center(child: CircularProgressIndicator())
                         );
-                        bool resul=await gruposBL().unirseGrupo(idController.text, contraController.text);
+                        Map resul=await gruposBL().unirseGrupo(idController.text, contraController.text);
                         Navigator.pop(context);
-                        if (resul) {
-                          Navigator.pop(context);
-                        } else {
-                          setState(() {
-                            error = "Id o contraseña incorrectos";
-                          });
+                        print("resultado");
+                        print(resul);
+                        if(resul.containsKey('error')) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Error'),
+                                content: Text(resul['error']),
+                                actions: <Widget>[
+                                  ElevatedButton(
+                                    child: Text('Close'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }else{
+                            setState(() {
+                              grupos.add(tarjetaGrupo(
+                                nombre: resul['nombre'],
+                                color: resul['color'],
+                                id: resul['idGrupo'],
+                                esAdmin: resul['admin'] == FirebaseAuth.instance.currentUser?.uid,
+                                secreto: resul['secreto'],
+                                borradPadre: menosAsignatura,
+                                editPadre: crearGrupo,
+                              ));
+                            });
+                            print("AQUI");
+                            Navigator.pop(context);
                         }
+
                       }
                     },
                     child: const Text('Unirse'),
@@ -461,13 +496,40 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
         child: Row(
           children: [
             SizedBox(width: 10),
-            Text(
-                widget.nombre,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                )
+            GestureDetector(
+              onTap:() {
+                //copiar el id al portapapeles
+                Clipboard.setData(ClipboardData(text: widget.id));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('ID copiado al portapapeles'),
+                  ),
+                );
+              },
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.3,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        widget.nombre,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        )
+                    ),
+                    Text(widget.id,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        )
+                    ),
+                  ],
+                ),
+              ),
             ),
             SizedBox(width: 10),
             Spacer(),
@@ -503,7 +565,8 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
               ),
             ),
             if(widget.esAdmin)...[
-              SizedBox(width: 10),
+              const VerticalDivider(color: Colors.white),
+              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   widget.editPadre(widget.nombre, widget.color, widget.id);
@@ -726,8 +789,11 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
           content: SingleChildScrollView(
               child: ListBody(
                 children: personas.map((persona) {
+                  print(persona);
                   if(esAdmin) {
                     return ListTile(
+                      leading: persona['persona_data'].containsKey('imagen') ? ClipOval(child: Image.network(persona['persona_data']['imagen'], height: 50, width: 50, fit: BoxFit.cover))
+                      : Icon(Icons.person,size : 50),
                       title: Text(persona['persona_data']['nombre']),
                       trailing: persona['persona_id'] == FirebaseAuth.instance.currentUser?.uid ?
                       null
