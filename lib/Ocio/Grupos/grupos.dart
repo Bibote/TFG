@@ -719,7 +719,7 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          content: Container(
+          content: SizedBox(
             width: double.maxFinite,
             height: MediaQuery.of(context).size.height * 0.5,
             child: GoogleMap(
@@ -731,7 +731,7 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
                 ),
                 zoom: 15,
               ),
-              markers: Set.from([
+              markers: {
                 Marker(
                   markerId: MarkerId("restaurante"),
                   position: LatLng(
@@ -743,7 +743,7 @@ class _tarjetaGrupoState extends State<tarjetaGrupo> {
                     snippet: restaurante.vicinity,
                   ),
                 ),
-              ]),
+              },
             ),
           ),
         );

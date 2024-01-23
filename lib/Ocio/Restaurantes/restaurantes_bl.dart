@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -29,14 +30,15 @@ class restaurantesBL {
     var permisos = Permission.location;
     if (await permisos.isDenied) {
       await permisos.request();
+      permisos = Permission.location;
     }
     if (await permisos.isPermanentlyDenied) {
       await openAppSettings();
+      permisos = Permission.location;
     }
     if (await permisos.isGranted) {
-      Position location = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      try {
+      Position location = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+
         final result = await _places.searchNearbyWithRadius(
           Location(lat: location.latitude, lng: location.longitude),
           10000,
@@ -45,7 +47,11 @@ class restaurantesBL {
           keyword: query,
         );
         _nextPageToken = result.nextPageToken ?? "";
+        print("resultados");
+        print(result.toJson());
+        print(result.status == "OK");
         if (result.status == "OK") {
+          print("oki");
           var resta = await restaurantesBD().getRestaurantes();
           //Filtrar los que ya estan en la base de datos
           result.results.removeWhere((element) => resta.any((restaurante) => restaurante['id'] == element.placeId));
@@ -53,15 +59,13 @@ class restaurantesBL {
 
           return result.results;
         } else {
-          throw Exception(result.errorMessage);
+          print("not oki");
+          throw Exception("Error api");
         }
       }
-      catch (e) {
-        throw Exception(e);
-      }
-    }
     else {
-      throw Exception("No se han dado permisos de localización");
+      print("aqui3");
+      throw Exception("permisos");
     }
   }
 

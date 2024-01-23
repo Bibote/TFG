@@ -121,17 +121,13 @@ class _runningPomodoroState extends State<runningPomodoro> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-    isRunning = true;
-    startTimer();
-    counter();
-  }
-
-  void startTimer() {
     setState(() {
       tiempo = widget.estudio;
       isRunning = true;
     });
+    counter();
   }
+
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
@@ -167,7 +163,6 @@ class _runningPomodoroState extends State<runningPomodoro> {
 
     }
   }
-
 
   void counter() {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {

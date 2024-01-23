@@ -91,7 +91,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: false
       ),
       themeMode: _themeMode,
-      home: App(),
+      home: const App(),
     );
   }
 
@@ -121,7 +121,7 @@ class App extends StatelessWidget {
               } else if (snapshot.hasData) {
                 return const Menu();
               } else {
-                return LoginWidget();
+                return const LoginWidget();
               }
             }
         )
