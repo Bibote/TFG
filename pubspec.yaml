@@ -77,6 +77,7 @@ dependencies:
   image_picker: ^1.0.7
   firebase_storage: ^11.6.0
 
+
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
@@ -119,6 +120,9 @@ flutter:
     - assets/google.png
     - .env
     - assets/icon_no_bg.png
+    - assets/mapAdmin.png
+    - assets/mapPublico.png
+    - assets/mapApuntado.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -164,7 +164,9 @@ class actividadesBD {
     });
   }
 
+/*
   Future<bool> eliminarEventoCalendario(String idEvento) async {
     List usuarios = [];
   }
+ */
 }

@@ -1,5 +1,11 @@
+import 'dart:typed_data';
+import 'dart:ui';
+import 'dart:ui' as ui;
+
+
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +21,7 @@ class _pantallaActividadesState extends State<pantallaActividades> {
   LatLng ubiUsuario = LatLng(0, 0);
   Set<Marker> _markers = {};
   CustomInfoWindowController _customInfoWindowController = CustomInfoWindowController();
+  late BitmapDescriptor iconoAdmin, iconoPublico, iconoApuntado;
 
 
   @override
@@ -61,9 +68,59 @@ class _pantallaActividadesState extends State<pantallaActividades> {
       }
     }
   }
+
+  Future<Uint8List?> getBytesFromCanvas(int width, int height, String imagePath) async {
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final Paint paint = Paint()..color = Colors.transparent;
+    final Radius radius = Radius.circular(20.0);
+    canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          Rect.fromLTWH(0.0, 0.0, width.toDouble(), height.toDouble()),
+          topLeft: radius,
+          topRight: radius,
+          bottomLeft: radius,
+          bottomRight: radius,
+        ),
+        paint);
+    ByteData? data = await rootBundle.load(imagePath);
+    Uint8List lst = data.buffer.asUint8List();
+    Codec codec = await instantiateImageCodec(lst);
+    FrameInfo fi = await codec.getNextFrame();
+    paintImage(canvas: canvas, rect: Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()), image: fi.image);
+    final img = await pictureRecorder.endRecording().toImage(width, height);
+    final dataBytes = await img.toByteData(format: ui.ImageByteFormat.png);
+    return dataBytes?.buffer.asUint8List();
+  }
+
+
   Future<void> getActividades() async {
     List<Map> grupos = await getGrupos();
     actividadesBL bl = actividadesBL();
+    final Uint8List? markerIcon1, markerIcon2, markerIcon3;
+    markerIcon1 = await getBytesFromCanvas(125, 225, 'assets/mapAdmin.png');
+    if(markerIcon1 != null) {
+      iconoAdmin = BitmapDescriptor.fromBytes(markerIcon1);
+    } else {
+      iconoAdmin = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    }
+    markerIcon2 = await getBytesFromCanvas(125, 225, 'assets/mapPublico.png');
+    if(markerIcon2 != null) {
+      iconoPublico = BitmapDescriptor.fromBytes(markerIcon2);
+    } else {
+      iconoPublico = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+    }
+    markerIcon3 = await getBytesFromCanvas(125, 225, 'assets/mapApuntado.png');
+    if(markerIcon3 != null) {
+      iconoApuntado = BitmapDescriptor.fromBytes(markerIcon3);
+    } else {
+      iconoApuntado = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
+    }
+    print("iconos cargados");
+    print(iconoAdmin);
+    print(iconoPublico);
+    print(iconoApuntado);
+
     await bl.getActividades().then((value) {
       if(value.containsKey('error')) {
         showError("Error", value['error']);
@@ -76,11 +133,11 @@ class _pantallaActividadesState extends State<pantallaActividades> {
             }
           }
           if(element['modo'] == 'admin') {
-            _markers.add(ActividadAdmin(element['actividad_id'], element['actividad_data']['nombre'], element['actividad_data']['numMax'], element['actividad_data']['hora'].toDate(), LatLng(element['actividad_data']['ubi'].latitude, element['actividad_data']['ubi'].longitude), element['actividad_data']['descripcion'],element['actividad_data']['grupo']));
+            _markers.add(ActividadAdmin(element['actividad_id'], element['actividad_data']['nombre'], element['actividad_data']['numMax'], element['actividad_data']['hora'].toDate(), LatLng(element['actividad_data']['ubi'].latitude, element['actividad_data']['ubi'].longitude), element['actividad_data']['descripcion'],element['actividad_data']['grupo'],iconoAdmin));
           } else if(element['modo'] == 'ninguno') {
-            _markers.add(ActividadPublica(element['actividad_id'], element['actividad_data']['nombre'], element['actividad_data']['numMax'], element['actividad_data']['hora'].toDate(), element['actividad_data']['descripcion'], LatLng(element['actividad_data']['ubi'].latitude, element['actividad_data']['ubi'].longitude),element['actividad_data']['grupo']??null));
+            _markers.add(ActividadPublica(element['actividad_id'], element['actividad_data']['nombre'], element['actividad_data']['numMax'], element['actividad_data']['hora'].toDate(), element['actividad_data']['descripcion'], LatLng(element['actividad_data']['ubi'].latitude, element['actividad_data']['ubi'].longitude),element['actividad_data']['grupo'],iconoPublico));
           } else if(element['modo'] == 'integrante') {
-            _markers.add(ActividadApuntado(element['actividad_id'], element['actividad_data']['nombre'], element['actividad_data']['numMax'], element['actividad_data']['hora'].toDate(), LatLng(element['actividad_data']['ubi'].latitude, element['actividad_data']['ubi'].longitude), element['actividad_data']['descripcion'],element['actividad_data']['grupo']));
+            _markers.add(ActividadApuntado(element['actividad_id'], element['actividad_data']['nombre'], element['actividad_data']['numMax'], element['actividad_data']['hora'].toDate(), LatLng(element['actividad_data']['ubi'].latitude, element['actividad_data']['ubi'].longitude), element['actividad_data']['descripcion'],element['actividad_data']['grupo'],iconoApuntado));
           }
         }
       }
@@ -321,7 +378,7 @@ class _pantallaActividadesState extends State<pantallaActividades> {
                       showError("Error", res['error']);
                     }else {
                       if(context.mounted)Navigator.of(context).pop();
-                      Marker actividad = ActividadAdmin(res['id'], nombreControler.text, int.parse(maxParticipantesControler.text), hora, latLng, descripcionControler.text,idGrupo);
+                      Marker actividad = ActividadAdmin(res['id'], nombreControler.text, int.parse(maxParticipantesControler.text), hora, latLng, descripcionControler.text,idGrupo,iconoAdmin);
                       addActividad(actividad);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -448,12 +505,12 @@ class _pantallaActividadesState extends State<pantallaActividades> {
 
   }
 
-  Marker ActividadPublica(String idActividad, String nombre, int numMax, DateTime hora, descripcion, LatLng ubi,String? idGrupo) {
+  Marker ActividadPublica(String idActividad, String nombre, int numMax, DateTime hora, descripcion, LatLng ubi,String? idGrupo, BitmapDescriptor iconoPublico) {
     return Marker(
       markerId: MarkerId(idActividad),
       position: ubi,
       consumeTapEvents: true,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      icon: iconoPublico,
       onTap: () {
         _customInfoWindowController.addInfoWindow!(
           FutureBuilder(
@@ -540,7 +597,7 @@ class _pantallaActividadesState extends State<pantallaActividades> {
                                 onTap: () async {
                                   String? res = await actividadesBL().apuntarseActividad(idActividad, nombre,hora);
                                   if (res=="OK") {
-                                    Marker actividad = ActividadApuntado(idActividad,nombre,numMax,hora,ubi,descripcion,idGrupo);
+                                    Marker actividad = ActividadApuntado(idActividad,nombre,numMax,hora,ubi,descripcion,idGrupo,iconoApuntado);
                                     setState(() {
                                       MarkerId id = MarkerId(idActividad);
                                       _markers.removeWhere((element) =>
@@ -642,11 +699,11 @@ class _pantallaActividadesState extends State<pantallaActividades> {
     );
   }
 
-  Marker ActividadApuntado(String idActividad, String nombre, int numMax, DateTime hora, LatLng ubi, String descripcion, String? idGrupo) {
+  Marker ActividadApuntado(String idActividad, String nombre, int numMax, DateTime hora, LatLng ubi, String descripcion, String? idGrupo, BitmapDescriptor iconoApuntado) {
     return Marker(
       markerId: MarkerId(idActividad),
       position: ubi,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      icon: iconoApuntado,
       consumeTapEvents: true,
       onTap: () {
         _customInfoWindowController.addInfoWindow!(
@@ -733,7 +790,7 @@ class _pantallaActividadesState extends State<pantallaActividades> {
                                 onTap: () async {
                                   bool res = await actividadesBL().salirActividad(idActividad);
                                   if (res) {
-                                    Marker actividad = ActividadPublica(idActividad,nombre,numMax,hora,descripcion,ubi,idGrupo);
+                                    Marker actividad = ActividadPublica(idActividad,nombre,numMax,hora,descripcion,ubi,idGrupo,iconoPublico);
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
@@ -834,11 +891,13 @@ class _pantallaActividadesState extends State<pantallaActividades> {
     );
   }
 
-  Marker ActividadAdmin(String idActividad, String nombre, int numMax, DateTime hora, LatLng ubi, String descripcion, String? idGrupo) {
+  Marker ActividadAdmin(String idActividad, String nombre, int numMax, DateTime hora, LatLng ubi, String descripcion, String? idGrupo ,BitmapDescriptor icono){
+    BitmapDescriptor myIcon =BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+
     return Marker(
       markerId: MarkerId(idActividad),
       position: ubi,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      icon: icono,
       consumeTapEvents: true,
       onTap: () {
         _customInfoWindowController.addInfoWindow!(

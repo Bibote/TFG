@@ -147,7 +147,7 @@ class actividadesBL {
   }
 
   Future<String> apuntarseActividad(String idActividad, String nombre, DateTime hora) async {
-    return await _db.apuntarseActividad(idActividad);
+    return await _db.apuntarseActividad(idActividad,nombre,hora);
   }
 
   Future<List> getInfoParticipantes(List usuarios) async {
