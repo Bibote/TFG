@@ -150,6 +150,21 @@ class gruposBD  {
       return false;
     });
 
+    //hay que eliminar las actividades del grupo
+    await db.collection('grupos').doc(id).collection('actividades').where('grupo', isEqualTo: id).get().then((value) async {
+      for (var element in value.docs) {
+        await db.collection('grupos').doc(id).collection('actividades').doc(element.id).delete().then((value) {
+          print("Actividad eliminada con id: ${element.id}");
+        }).catchError((error) {
+          print("Error al eliminar la actividad: $error");
+          return false;
+        });
+      }
+    }).catchError((error) {
+      print("Error al obtener las actividades: $error");
+      return false;
+    });
+
     //ahora hay que eliminar el grupo
     await db.collection('grupos').doc(id).delete().then((value) {
       print("Grupo eliminado con id: $id");
